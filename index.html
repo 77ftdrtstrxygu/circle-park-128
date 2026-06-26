@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>圆形游乐园</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Microsoft YaHei','PingFang SC',sans-serif;
+  background:linear-gradient(180deg,#7EC8E3 0%,#b8dff0 30%,#d4eaf7 55%,#c8e6c9 85%,#a5d6a7 100%);
+  min-height:100vh;overflow-x:hidden;position:relative;
+}
+body::before{
+  content:'';position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 80% 60% at 20% 30%,rgba(255,255,255,0.25) 0%,transparent 60%),
+             radial-gradient(ellipse 60% 50% at 75% 20%,rgba(255,255,200,0.2) 0%,transparent 50%),
+             radial-gradient(ellipse 70% 40% at 50% 70%,rgba(200,255,200,0.15) 0%,transparent 50%);
+}
+.cloud{position:fixed;pointer-events:none;z-index:0;background:rgba(255,255,255,0.55);border-radius:50%;filter:blur(2px)}
+.cloud::before,.cloud::after{content:'';position:absolute;background:inherit;border-radius:50%}
+.cloud.c1{width:120px;height:50px;top:8%;animation:cloudDrift 28s linear infinite;}
+.cloud.c1::before{width:50px;height:50px;top:-25px;left:20px}
+.cloud.c1::after{width:70px;height:40px;top:-15px;left:50px}
+.cloud.c2{width:90px;height:38px;top:15%;animation:cloudDrift 34s linear infinite;animation-delay:-10s}
+.cloud.c2::before{width:38px;height:38px;top:-19px;left:15px}
+.cloud.c2::after{width:55px;height:30px;top:-10px;left:40px}
+.cloud.c3{width:140px;height:55px;top:4%;animation:cloudDrift 38s linear infinite;animation-delay:-22s}
+.cloud.c3::before{width:55px;height:55px;top:-28px;left:25px}
+.cloud.c3::after{width:80px;height:45px;top:-18px;left:55px}
+@keyframes cloudDrift{0%{left:-160px}100%{left:110vw}}
+.symbol-float{position:fixed;pointer-events:none;z-index:0;font-size:22px;opacity:0.12;font-weight:bold;color:#4a90d9}
+.symbol-float.s1{animation:symFloat 18s ease-in-out infinite;top:22%;left:8%}
+.symbol-float.s2{animation:symFloat 20s ease-in-out infinite;animation-delay:-7s;top:35%;left:88%;font-size:18px}
+.symbol-float.s3{animation:symFloat 22s ease-in-out infinite;animation-delay:-13s;top:60%;left:12%;font-size:26px}
+.symbol-float.s4{animation:symFloat 19s ease-in-out infinite;animation-delay:-4s;top:55%;left:80%;font-size:16px}
+@keyframes symFloat{0%,100%{transform:translate(0,0) rotate(0deg)}25%{transform:translate(30px,-20px) rotate(8deg)}50%{transform:translate(-15px,-35px) rotate(-5deg)}75%{transform:translate(-25px,-10px) rotate(3deg)}}
+
+#menu{max-width:720px;margin:0 auto;padding:36px 16px 20px;text-align:center;position:relative;z-index:1}
+.menu-title{
+  font-size:46px;color:#fff;margin-bottom:4px;letter-spacing:6px;
+  text-shadow:2px 2px 0 #FF6B6B,4px 4px 0 rgba(0,0,0,0.08);
+  animation:titleBounce 0.8s cubic-bezier(0.18,0.89,0.32,1.28) both;
+}
+@keyframes titleBounce{0%{opacity:0;transform:translateY(-30px) scale(0.8)}60%{transform:translateY(6px) scale(1.02)}100%{opacity:1;transform:translateY(0) scale(1)}}
+.menu-sub{font-size:18px;color:#5a7a8a;margin-bottom:34px;animation:subFade 0.8s 0.2s ease-out both}
+@keyframes subFade{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
+.game-cards{display:flex;gap:28px;justify-content:center;flex-wrap:wrap}
+.game-card{
+  flex:1;min-width:260px;max-width:320px;border-radius:22px;padding:36px 22px 28px;
+  cursor:pointer;transition:all 0.45s cubic-bezier(0.18,0.89,0.32,1.28);
+  text-align:center;position:relative;overflow:visible;
+  box-shadow:0 6px 24px rgba(0,0,0,0.12);
+}
+.game-card:nth-child(1){animation:cardFlyIn 0.6s 0.3s ease-out both}
+.game-card:nth-child(2){animation:cardFlyIn 0.6s 0.5s ease-out both}
+@keyframes cardFlyIn{0%{opacity:0;transform:translateY(50px) scale(0.9)}100%{opacity:1;transform:translateY(0) scale(1)}}
+.game-card::before{
+  content:'';position:absolute;inset:-3px;border-radius:24px;z-index:-1;
+  animation:glowPulse 2.5s ease-in-out infinite;
+}
+.game-card:nth-child(1)::before{background:linear-gradient(135deg,#FF6B6B,#FFD93D,#FF8E53);animation-delay:0s}
+.game-card:nth-child(2)::before{background:linear-gradient(135deg,#4ECDC4,#A29BFE,#45B7D1);animation-delay:1.2s}
+@keyframes glowPulse{0%,100%{opacity:0.35;filter:blur(8px)}50%{opacity:0.7;filter:blur(14px)}}
+.game-card:hover{transform:translateY(-12px);box-shadow:0 20px 50px rgba(0,0,0,0.18)}
+.game-card:hover::before{opacity:1;filter:blur(18px)}
+.game-card:active{transform:scale(0.96)}
+.game-card.match{background:linear-gradient(150deg,#FF6B6B 0%,#FF8E53 60%,#FFB347 100%)}
+.game-card.escape{background:linear-gradient(150deg,#4ECDC4 0%,#45B7D1 60%,#5B9BD5 100%)}
+.game-card .ribbon{
+  position:absolute;top:-2px;right:-2px;padding:6px 16px 6px 12px;
+  background:#FFD93D;color:#8B6914;font-size:12px;font-weight:bold;
+  border-radius:0 18px 0 14px;box-shadow:1px 2px 6px rgba(0,0,0,0.15);
+  letter-spacing:1px;
+}
+.game-card:nth-child(2) .ribbon{background:#fff;color:#4ECDC4}
+.game-card .icon{font-size:60px;display:block;margin-bottom:16px;transition:transform 0.4s}
+.game-card:hover .icon{transform:scale(1.12) rotate(-5deg)}
+.game-card .name{font-size:24px;color:#fff;font-weight:bold;margin-bottom:8px;text-shadow:1px 1px 2px rgba(0,0,0,0.15)}
+.game-card .desc{font-size:14px;color:rgba(255,255,255,0.88);line-height:1.6}
+
+.game-screen{display:none;max-width:780px;margin:0 auto;padding:20px 16px;position:relative;z-index:1}
+.game-screen.active{display:block;animation:screenIn 0.4s ease-out}
+@keyframes screenIn{0%{opacity:0;transform:translateY(16px)}100%{opacity:1;transform:translateY(0)}}
+.back-btn{
+  display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border-radius:24px;
+  border:2px solid rgba(255,255,255,0.6);background:rgba(255,255,255,0.18);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  color:#fff;cursor:pointer;font-size:15px;font-weight:bold;margin-bottom:18px;
+  transition:all 0.35s;font-family:inherit;
+}
+.back-btn:hover{background:rgba(255,255,255,0.35);transform:translateX(-4px);border-color:#fff}
+
+.match-header{text-align:center;margin-bottom:20px}
+.match-header h2{font-size:30px;color:#fff;text-shadow:1px 1px 0 rgba(0,0,0,0.12);margin-bottom:12px}
+.match-stats{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.stat{
+  background:rgba(255,255,255,0.35);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-radius:30px;padding:10px 22px;font-size:15px;font-weight:bold;color:#444;
+  border:1px solid rgba(255,255,255,0.5);letter-spacing:0.5px;
+}
+.stat span{color:#FF6B6B;font-size:22px;margin:0 2px}
+
+.match-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;max-width:580px;margin:0 auto}
+@media(max-width:550px){.match-grid{grid-template-columns:repeat(2,1fr)}}
+.match-card{
+  aspect-ratio:1;perspective:700px;cursor:pointer;
+  animation:cardDeal 0.5s ease-out both;
+}
+@keyframes cardDeal{0%{opacity:0;transform:scale(0) rotateY(180deg)}100%{opacity:1;transform:scale(1) rotateY(0)}}
+.match-card-inner{position:relative;width:100%;height:100%;transition:transform 0.55s cubic-bezier(0.4,0,0.2,1);transform-style:preserve-3d}
+.match-card.flipped .match-card-inner{transform:rotateY(180deg)}
+.match-card-front,.match-card-back{
+  position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:16px;
+  display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:bold;
+}
+.match-card-back{
+  background:repeating-linear-gradient(45deg,#FFD93D 0px,#FFD93D 8px,#FF8E53 8px,#FF8E53 16px,#FF6B6B 16px,#FF6B6B 24px,#FFD93D 24px,#FFD93D 32px);
+  border:4px solid #e55a5a;box-shadow:0 5px 16px rgba(255,107,107,0.25);
+}
+.match-card-back::after{
+  content:'★';font-size:42px;color:rgba(255,255,255,0.6);
+  text-shadow:0 2px 8px rgba(0,0,0,0.2);
+}
+.match-card-front{transform:rotateY(180deg);border:4px solid currentColor;}
+.match-card.type-radius .match-card-front{color:#6C5CE7;background:linear-gradient(150deg,#dfe6fd,#c3d0fa);}
+.match-card.type-area .match-card-front{color:#00B894;background:linear-gradient(150deg,#d5f5ed,#b2ebda);}
+.match-card.matched .match-card-front{
+  border-color:#27AE60;box-shadow:0 0 0 6px rgba(39,174,96,0.2),0 8px 24px rgba(39,174,96,0.15);
+  animation:matchPulse 0.5s ease-out;
+}
+@keyframes matchPulse{0%,100%{transform:rotateY(180deg) scale(1)}40%{transform:rotateY(180deg) scale(1.12)}}
+
+.particle-burst{position:fixed;pointer-events:none;z-index:80}
+.particle-burst .p{position:absolute;width:10px;height:10px;border-radius:50%;animation:particleFly 0.7s ease-out forwards}
+@keyframes particleFly{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0)}}
+
+.escape-header{text-align:center;margin-bottom:22px}
+.escape-header h2{font-size:30px;color:#fff;text-shadow:1px 1px 0 rgba(0,0,0,0.12)}
+.escape-room{position:relative;max-width:620px;margin:0 auto;padding:22px;
+  background:repeating-linear-gradient(0deg,#6d6655 0px,#6d6655 2px,#7a7260 2px,#7a7260 6px,#8a8170 6px,#8a8170 8px);
+  background-color:#5c5545;border-radius:20px;box-shadow:inset 0 0 60px rgba(0,0,0,0.4),0 8px 32px rgba(0,0,0,0.3);
+  border:6px solid #4a4232;
+}
+.door-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.door-card{
+  background:linear-gradient(180deg,rgba(180,140,100,0.9) 0%,rgba(140,100,60,0.9) 40%,rgba(120,80,40,0.9) 100%);
+  position:relative;border-radius:14px 14px 6px 6px;padding:4px;cursor:pointer;transition:all 0.45s;
+  border:5px solid #5D4037;box-shadow:0 5px 18px rgba(0,0,0,0.3),inset 0 0 30px rgba(0,0,0,0.15);
+  overflow:hidden;min-height:185px;
+}
+.door-card::before{
+  content:'';position:absolute;inset:4px;border-radius:10px 10px 4px 4px;
+  background:repeating-linear-gradient(0deg,transparent 0,transparent 14px,rgba(0,0,0,0.06) 14px,rgba(0,0,0,0.06) 15px);
+  pointer-events:none;z-index:1;
+}
+.door-card::after{
+  content:'';position:absolute;right:16px;top:50%;transform:translateY(-50%);
+  width:22px;height:22px;border-radius:50%;background:radial-gradient(circle,#FFD54F,#F9A825);
+  border:3px solid #8D6E63;box-shadow:0 2px 6px rgba(0,0,0,0.3),inset 0 1px 2px rgba(255,255,255,0.5);z-index:2;
+}
+.door-card:hover{transform:translateY(-5px);box-shadow:0 10px 30px rgba(0,0,0,0.4)}
+.door-card .door-inner{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:24px 16px}
+.door-icon-text{font-size:44px;margin-bottom:8px;transition:transform 0.4s}
+.door-card:hover .door-icon-text{transform:scale(1.1)}
+.door-label{font-size:17px;color:#fff;font-weight:bold;text-align:center;text-shadow:1px 1px 2px rgba(0,0,0,0.5)}
+.door-status{margin-top:10px;font-size:13px;color:rgba(255,255,255,0.75);text-align:center}
+@keyframes lockShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+.door-card.wrong-shake{animation:lockShake 0.4s ease-out}
+.door-card.solved{background:linear-gradient(180deg,rgba(102,187,106,0.95),rgba(67,160,71,0.95),rgba(46,125,50,0.95));border-color:#2E7D32}
+.door-card.solved::after{background:radial-gradient(circle,#A5D6A7,#66BB6A);border-color:#2E7D32;animation:none}
+.door-card.solved .door-icon-text{animation:unlockPop 0.5s ease-out}
+@keyframes unlockPop{0%{transform:scale(0.4) rotate(-30deg)}60%{transform:scale(1.3) rotate(10deg)}100%{transform:scale(1) rotate(0deg)}}
+.door-card.solved .door-status{color:#fff;font-weight:bold}
+
+.progress-bar-wrap{max-width:600px;margin:18px auto 0;position:relative;z-index:1;display:flex;align-items:center;gap:10px}
+.progress-label{font-size:14px;color:#fff;font-weight:bold;white-space:nowrap}
+.progress-bar{flex:1;height:12px;background:rgba(255,255,255,0.25);border-radius:6px;overflow:hidden;box-shadow:inset 0 2px 4px rgba(0,0,0,0.1)}
+.progress-fill{height:100%;background:linear-gradient(90deg,#4ECDC4,#27AE60);border-radius:6px;transition:width 0.6s;width:0%;box-shadow:0 0 8px rgba(39,174,96,0.4)}
+.progress-steps{display:flex;gap:2px;justify-content:space-between;margin-top:6px}
+.progress-step{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.3);transition:all 0.4s}
+.progress-step.done{background:#27AE60;box-shadow:0 0 6px rgba(39,174,96,0.6)}
+
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:50;justify-content:center;align-items:center;padding:16px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.modal-overlay.show{display:flex}
+.modal-box{
+  background:rgba(255,255,255,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-radius:24px;padding:30px 26px;max-width:440px;width:100%;text-align:center;
+  box-shadow:0 20px 70px rgba(0,0,0,0.25),0 0 0 1px rgba(255,255,255,0.5);
+  animation:modalIn 0.35s cubic-bezier(0.18,0.89,0.32,1.28);
+}
+@keyframes modalIn{0%{opacity:0;transform:scale(0.85) translateY(30px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+.modal-box h3{font-size:23px;color:#333;margin-bottom:10px}
+.modal-box .door-icon{font-size:52px;margin-bottom:10px}
+.modal-box .question{font-size:16px;color:#555;margin:12px 0;line-height:1.7}
+.modal-box .hint-wrap{overflow:hidden;max-height:0;transition:max-height 0.5s ease,margin 0.5s ease}
+.modal-box .hint-wrap.show{max-height:100px;margin:8px 0}
+.modal-box .hint-text{font-size:14px;color:#8B6914;background:#FFF8E1;padding:10px 14px;border-radius:10px;border-left:4px solid #FFA726;text-align:left}
+.modal-box .input-group{position:relative;margin:14px 0 4px}
+.modal-box input{
+  width:100%;padding:12px 16px;border:none;border-bottom:3px solid #ddd;border-radius:0;
+  font-size:20px;text-align:center;font-family:inherit;outline:none;background:transparent;
+  transition:border-color 0.3s;
+}
+.modal-box input:focus{border-bottom-color:#4ECDC4}
+.modal-box input.correct-input{border-bottom-color:#27AE60}
+.modal-box input.wrong-input{border-bottom-color:#E74C3C;animation:inputShake 0.5s}
+@keyframes inputShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}50%{transform:translateX(6px)}75%{transform:translateX(-4px)}}
+.modal-box .btn-row{display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+.modal-btn{padding:11px 26px;border:none;border-radius:12px;font-size:15px;font-weight:bold;cursor:pointer;transition:all 0.25s;font-family:inherit}
+.modal-btn.primary{background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff;box-shadow:0 4px 14px rgba(78,205,196,0.35)}
+.modal-btn.primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(78,205,196,0.45)}
+.modal-btn.secondary{background:#eee;color:#666}
+.modal-btn.secondary:hover{background:#ddd}
+.modal-btn.hint-btn{background:#FFF3E0;color:#E65100;border:2px solid #FFA726}
+.modal-btn.hint-btn:hover{background:#FFE0B2}
+.modal-btn.success-btn{background:#27AE60;color:#fff;animation:btnPop 0.4s ease-out}
+@keyframes btnPop{0%{transform:scale(0.7)}60%{transform:scale(1.1)}100%{transform:scale(1)}}
+.modal-feedback{margin-top:10px;font-weight:bold;font-size:15px;min-height:24px;transition:all 0.3s}
+.modal-feedback.success{color:#27AE60}
+.modal-feedback.error{color:#E74C3C}
+
+.celebration-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:99}
+.celebration-overlay.show{display:block}
+.confetti{position:absolute;width:14px;height:14px;animation:confettiFall 2.8s ease-out forwards}
+.confetti.circle{border-radius:50%}
+.confetti.rect{border-radius:3px}
+.confetti.star{clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
+@keyframes confettiFall{0%{transform:translateY(-60px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(900deg);opacity:0}}
+
+.stars{font-size:40px;margin:8px 0}
+.stars span{opacity:0.25;transition:opacity 0.5s;display:inline-block}
+.stars span.lit{opacity:1;animation:starPop 0.5s ease-out}
+@keyframes starPop{0%{transform:scale(0) rotate(-30deg)}60%{transform:scale(1.4) rotate(5deg)}100%{transform:scale(1) rotate(0deg)}}
+
+.golden-text{background:linear-gradient(135deg,#F9A825,#FFD54F,#FFB300);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:bold}
+
+.footer-text{margin-top:32px;font-size:14px;color:rgba(0,0,0,0.3);text-align:center;position:relative;z-index:1}
+.wave-ground{position:fixed;bottom:0;left:0;right:0;height:80px;pointer-events:none;z-index:0;
+  background:linear-gradient(180deg,transparent 0%,rgba(144,200,144,0.35) 40%,rgba(120,180,120,0.5) 100%);
+  clip-path:polygon(0% 60%,5% 40%,10% 55%,15% 35%,20% 50%,25% 30%,30% 48%,35% 25%,40% 45%,45% 28%,50% 42%,55% 20%,60% 40%,65% 25%,70% 38%,75% 20%,80% 35%,85% 22%,90% 32%,95% 18%,100% 30%,100% 100%,0% 100%);
+}
+</style>
+</head>
+<body>
+
+<div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div>
+<div class="symbol-float s1">πr²</div><div class="symbol-float s2">S=?</div><div class="symbol-float s3">r=3</div><div class="symbol-float s4">C=2πr</div>
+<div class="wave-ground"></div>
+
+<div id="menu">
+  <div class="menu-title">🎡 圆形游乐园</div>
+  <div class="menu-sub">选择一项游乐设施，探索圆的面积奥秘！</div>
+  <div class="game-cards">
+    <div class="game-card match" onclick="startGame('match')">
+      <div class="ribbon">🔥 热门</div>
+      <span class="icon">🃏</span>
+      <div class="name">半径-面积连连看</div>
+      <div class="desc">翻开卡片，将半径与对应的面积配对消除。比一比谁用时最短！</div>
+    </div>
+    <div class="game-card escape" onclick="startGame('escape')">
+      <div class="ribbon">🏆 挑战</div>
+      <span class="icon">🔐</span>
+      <div class="name">圆形密室逃脱</div>
+      <div class="desc">四扇紧闭的大门，每扇门后都藏着一道面积谜题。全部解开才能逃脱！</div>
+    </div>
+  </div>
+  <div class="footer-text">🏫 小学数学 · 圆的面积探究</div>
+</div>
+
+<div class="game-screen" id="screen-match">
+  <button class="back-btn" onclick="backToMenu()">← 返回游乐园</button>
+  <div class="match-header">
+    <h2>🃏 半径-面积连连看</h2>
+    <div class="match-stats">
+      <div class="stat">⏱ 用时 <span id="matchTime">0</span> s</div>
+      <div class="stat">🎯 翻牌 <span id="matchFlips">0</span> 次</div>
+      <div class="stat">✅ 配对 <span id="matchPairs">0</span>/4</div>
+    </div>
+  </div>
+  <div class="match-grid" id="matchGrid"></div>
+</div>
+
+<div class="game-screen" id="screen-escape">
+  <button class="back-btn" onclick="backToMenu()">← 返回游乐园</button>
+  <div class="escape-header"><h2>🔐 圆形密室逃脱</h2></div>
+  <div class="progress-bar-wrap">
+    <span class="progress-label">🔒 进度</span>
+    <div class="progress-bar"><div class="progress-fill" id="escapeProgress"></div></div>
+    <span class="progress-label" id="escapeCount">0/4</span>
+  </div>
+  <div class="progress-steps" id="progressSteps">
+    <div class="progress-step"></div><div class="progress-step"></div><div class="progress-step"></div><div class="progress-step"></div>
+  </div>
+  <div class="escape-room" style="margin-top:14px">
+    <div class="door-grid" id="doorGrid"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <div class="door-icon" id="modalIcon"></div>
+    <h3 id="modalTitle"></h3>
+    <div class="question" id="modalQuestion"></div>
+    <div class="hint-wrap" id="hintWrap"><div class="hint-text" id="modalHint"></div></div>
+    <div class="input-group"><input type="text" id="modalInput" placeholder="输入你的答案" autocomplete="off"></div>
+    <div class="modal-feedback" id="modalFeedback"></div>
+    <div class="btn-row">
+      <button class="modal-btn hint-btn" id="btnHint">💡 提示</button>
+      <button class="modal-btn primary" id="btnSubmit">提交答案</button>
+      <button class="modal-btn secondary" id="btnClose">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div class="celebration-overlay" id="celebration"></div>
+<div class="particle-burst" id="particleBurst"></div>
+
+<script>
+(function(){
+let currentGame = null;
+let matchCards=[],matchFlipped=[],matchLocked=false,matchPairs=0,matchFlips=0,matchSeconds=0,matchTimer=null,matchStarted=false;
+let escapeSolved=[false,false,false,false],currentDoor=-1,hintUsed=false;
+
+const DOOR_DATA=[
+  {icon:'🚪',label:'第1扇门',sub:'已知半径求面积',
+   question:'已知圆的半径 <b>r = 5</b><br>求圆的面积（π ≈ 3.14）',
+   hint:'圆的面积公式：S = π × r × r<br>即 S = 3.14 × 5 × 5',answers:['78.5','78.50','25π','25pi'],
+   successMsg:'🎉 S = π × 5² = 78.5'},
+  {icon:'🚪',label:'第2扇门',sub:'已知面积求半径',
+   question:'已知圆的面积 <b>S = 28.26</b><br>求半径 r（π ≈ 3.14）',
+   hint:'S = π × r² → r² = S ÷ π<br>r² = 28.26 ÷ 3.14 = 9',answers:['3','3.0'],
+   successMsg:'🎉 r = √(28.26÷3.14) = 3'},
+  {icon:'🚪',label:'第3扇门',sub:'面积倍数关系',
+   question:'大圆半径是小圆的 <b>3 倍</b><br>大圆面积是小圆的多少倍？',
+   hint:'面积 = π × r²<br>半径×3 → 面积×3² = 面积×9',answers:['9','9倍','九'],
+   successMsg:'🎉 面积比 = 半径比的平方 = 3² = 9'},
+  {icon:'🚪',label:'第4扇门',sub:'圆环面积计算',
+   question:'圆环外半径 <b>R = 5</b>，内半径 <b>r = 3</b><br>求圆环面积（π ≈ 3.14）',
+   hint:'圆环面积 = π × (R² − r²)<br>= 3.14 × (25 − 9) = 3.14 × 16',answers:['50.24','50.24','16π','16pi'],
+   successMsg:'🎉 S = π(25−9) = 16π ≈ 50.24'}
+];
+
+window.startGame=function(game){
+  document.getElementById('menu').style.display='none';
+  document.querySelectorAll('.game-screen').forEach(s=>s.classList.remove('active'));
+  if(game==='match'){document.getElementById('screen-match').classList.add('active');initMatch();}
+  else{document.getElementById('screen-escape').classList.add('active');initEscape();}
+  currentGame=game;
+};
+window.backToMenu=function(){
+  if(matchTimer){clearInterval(matchTimer);matchTimer=null;}
+  document.getElementById('menu').style.display='';
+  document.querySelectorAll('.game-screen').forEach(s=>s.classList.remove('active'));
+  currentGame=null;
+};
+
+function initMatch(){
+  const grid=document.getElementById('matchGrid');
+  matchCards=[];matchFlipped=[];matchLocked=false;matchPairs=0;matchFlips=0;matchSeconds=0;matchStarted=false;
+  if(matchTimer){clearInterval(matchTimer);matchTimer=null;}
+  document.getElementById('matchTime').textContent='0';
+  document.getElementById('matchFlips').textContent='0';
+  document.getElementById('matchPairs').textContent='0';
+  const pairs=[{r:2,area:'4π'},{r:3,area:'9π'},{r:4,area:'16π'},{r:5,area:'25π'}];
+  pairs.forEach((p,id)=>{matchCards.push({text:'r = '+p.r,type:'radius',pairId:id});matchCards.push({text:'S = '+p.area,type:'area',pairId:id});});
+  shuffle(matchCards);
+  grid.innerHTML='';
+  matchCards.forEach((card,i)=>{
+    const el=document.createElement('div');
+    el.className='match-card type-'+card.type;
+    el.style.animationDelay=(i*0.06)+'s';
+    el.innerHTML='<div class="match-card-inner"><div class="match-card-back"></div><div class="match-card-front">'+card.text+'</div></div>';
+    el.addEventListener('click',()=>flipCard(i,el));
+    grid.appendChild(el);
+  });
+}
+
+function flipCard(i,el){
+  if(matchLocked)return;
+  if(el.classList.contains('flipped')||el.classList.contains('matched'))return;
+  if(matchFlipped.length>=2)return;
+  if(!matchStarted){matchStarted=true;matchTimer=setInterval(()=>{matchSeconds++;document.getElementById('matchTime').textContent=matchSeconds;},1000);}
+  el.classList.add('flipped');matchFlipped.push({index:i,element:el});matchFlips++;
+  document.getElementById('matchFlips').textContent=matchFlips;
+  if(matchFlipped.length===2){
+    const[a,b]=matchFlipped;
+    if(matchCards[a.index].pairId===matchCards[b.index].pairId&&matchCards[a.index].type!==matchCards[b.index].type){
+      setTimeout(()=>{
+        a.element.classList.add('matched');b.element.classList.add('matched');
+        const ar=a.element.getBoundingClientRect(),br=b.element.getBoundingClientRect();
+        burstParticles(ar.left+ar.width/2,ar.top+ar.height/2,'#FF8E53');
+        burstParticles(br.left+br.width/2,br.top+br.height/2,'#4ECDC4');
+        matchPairs++;document.getElementById('matchPairs').textContent=matchPairs;matchFlipped=[];
+        if(matchPairs===4){clearInterval(matchTimer);matchTimer=null;
+          setTimeout(()=>{
+            const stars=matchFlips<=10?3:matchFlips<=16?2:1;
+            showCelebration();showResultModal('🏆','恭喜通关！',
+              '<div class="stars">'+[1,2,3].map(i=>'<span'+((i<=stars)?' class="lit" style="animation-delay:'+(i*0.2)+'s"':'')+'>⭐</span>').join('')+'</div>翻牌 <b>'+matchFlips+'</b> 次 | 用时 <b>'+matchSeconds+'</b> 秒',true);
+          },500);
+        }
+      },300);
+    }else{matchLocked=true;setTimeout(()=>{a.element.classList.remove('flipped');b.element.classList.remove('flipped');matchFlipped=[];matchLocked=false;},800);}
+  }
+}
+
+function burstParticles(x,y,color){
+  const container=document.getElementById('particleBurst');container.innerHTML='';
+  for(let i=0;i<10;i++){
+    const p=document.createElement('div');p.className='p';
+    p.style.left=x+'px';p.style.top=y+'px';p.style.background=color;
+    p.style.width=(6+Math.random()*8)+'px';p.style.height=p.style.width;
+    const angle=Math.random()*Math.PI*2,dist=30+Math.random()*50;
+    p.style.setProperty('--dx',Math.cos(angle)*dist+'px');
+    p.style.setProperty('--dy',Math.sin(angle)*dist+'px');
+    p.style.animationDelay=Math.random()*0.1+'s';
+    container.appendChild(p);
+  }
+  setTimeout(()=>container.innerHTML='',800);
+}
+
+function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}}
+
+function initEscape(){
+  escapeSolved=[false,false,false,false];currentDoor=-1;hintUsed=false;
+  document.getElementById('escapeProgress').style.width='0%';
+  document.getElementById('escapeCount').textContent='0/4';
+  document.querySelectorAll('.progress-step').forEach(s=>s.classList.remove('done'));
+  const grid=document.getElementById('doorGrid');grid.innerHTML='';
+  DOOR_DATA.forEach((d,i)=>{
+    const el=document.createElement('div');
+    el.className='door-card';el.id='door'+i;
+    el.innerHTML='<div class="door-inner"><div class="door-icon-text">🔒</div><div class="door-label">'+d.label+'</div><div class="door-status">'+d.sub+'</div></div>';
+    el.addEventListener('click',()=>{if(!escapeSolved[i])openDoor(i);});
+    grid.appendChild(el);
+  });
+}
+
+function openDoor(i){
+  if(escapeSolved[i])return;
+  currentDoor=i;hintUsed=false;
+  const d=DOOR_DATA[i];
+  document.getElementById('modalIcon').textContent=d.icon;
+  document.getElementById('modalTitle').textContent=d.label;
+  document.getElementById('modalQuestion').innerHTML=d.question;
+  document.getElementById('modalHint').innerHTML=d.hint;
+  document.getElementById('hintWrap').className='hint-wrap';
+  document.getElementById('modalInput').value='';
+  document.getElementById('modalInput').style.display='';
+  document.getElementById('modalInput').className='';
+  document.getElementById('modalFeedback').textContent='';
+  document.getElementById('modalFeedback').className='modal-feedback';
+  document.getElementById('btnSubmit').style.display='';document.getElementById('btnSubmit').className='modal-btn primary';
+  document.getElementById('btnHint').style.display='';document.getElementById('btnHint').className='modal-btn hint-btn';
+  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('modalInput').focus();
+}
+
+function checkDoorAnswer(){
+  if(currentDoor<0||currentDoor>=DOOR_DATA.length)return;
+  const d=DOOR_DATA[currentDoor];
+  const inp=document.getElementById('modalInput');
+  const input=inp.value.trim().toLowerCase().replace(/\s+/g,'');
+  const fb=document.getElementById('modalFeedback');
+  if(!input){fb.textContent='请输入答案';fb.className='modal-feedback error';inp.className='wrong-input';setTimeout(()=>inp.className='',600);return;}
+  if(d.answers.includes(input)){
+    fb.textContent=d.successMsg;fb.className='modal-feedback success';
+    inp.className='correct-input';
+    document.getElementById('btnSubmit').className='modal-btn success-btn';
+    escapeSolved[currentDoor]=true;updateEscapeUI();
+    if(escapeSolved.every(v=>v)){
+      setTimeout(()=>{showCelebration();showResultModal('🔓','全部逃脱成功！',
+        '<div class="stars"><span class="lit" style="animation-delay:0.2s">⭐</span><span class="lit" style="animation-delay:0.5s">⭐</span><span class="lit" style="animation-delay:0.8s">⭐</span></div><span class="golden-text" style="font-size:18px">你解开了所有面积谜题！</span>',true);},1200);
+    }else{setTimeout(()=>closeModal(),1500);}
+  }else{
+    fb.textContent='❌ 答案不对，再想想！'+(hintUsed?'':' 点击"提示"按钮获取帮助。');
+    fb.className='modal-feedback error';inp.className='wrong-input';
+    const el=document.getElementById('door'+currentDoor);
+    el.classList.add('wrong-shake');setTimeout(()=>el.classList.remove('wrong-shake'),400);
+    setTimeout(()=>inp.className='',600);inp.select();
+  }
+}
+
+function updateEscapeUI(){
+  DOOR_DATA.forEach((d,i)=>{
+    const el=document.getElementById('door'+i);
+    if(escapeSolved[i]){
+      el.classList.add('solved');
+      el.querySelector('.door-inner').innerHTML='<div class="door-icon-text">✅</div><div class="door-label">'+d.label+'</div><div class="door-status">已解锁 ✓</div>';
+    }
+  });
+  const count=escapeSolved.filter(v=>v).length;
+  document.getElementById('escapeProgress').style.width=(count/4*100)+'%';
+  document.getElementById('escapeCount').textContent=count+'/4';
+  document.querySelectorAll('.progress-step').forEach((s,i)=>{if(i<count)s.classList.add('done');});
+}
+
+function closeModal(){document.getElementById('modalOverlay').classList.remove('show');currentDoor=-1;}
+
+function showResultModal(icon,title,question,isFinal){
+  document.getElementById('modalIcon').textContent=icon;
+  document.getElementById('modalTitle').textContent=title;
+  document.getElementById('modalQuestion').innerHTML=question;
+  document.getElementById('hintWrap').className='hint-wrap';
+  document.getElementById('modalInput').style.display=isFinal?'none':'';
+  document.getElementById('modalInput').className='';
+  document.getElementById('modalFeedback').textContent='';
+  document.getElementById('modalFeedback').className='modal-feedback';
+  document.getElementById('btnSubmit').style.display=isFinal?'none':'';document.getElementById('btnSubmit').className='modal-btn primary';
+  document.getElementById('btnHint').style.display=isFinal?'none':'';document.getElementById('btnHint').className='modal-btn hint-btn';
+  document.getElementById('modalOverlay').classList.add('show');
+  if(isFinal)document.getElementById('btnClose').style.display='';
+}
+
+document.getElementById('btnSubmit').addEventListener('click',checkDoorAnswer);
+document.getElementById('btnClose').addEventListener('click',closeModal);
+document.getElementById('btnHint').addEventListener('click',()=>{document.getElementById('hintWrap').className='hint-wrap show';hintUsed=true;});
+document.getElementById('modalOverlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
+document.getElementById('modalInput').addEventListener('keydown',function(e){if(e.key==='Enter')checkDoorAnswer();});
+
+function showCelebration(){
+  const container=document.getElementById('celebration');
+  container.innerHTML='';
+  const colors=['#FF6B6B','#4ECDC4','#FFD93D','#27AE60','#FF8E53','#A29BFE','#FD79A8','#00CEC9','#FDCB6E','#6C5CE7'];
+  const shapes=['circle','rect','star'];
+  for(let i=0;i<90;i++){
+    const c=document.createElement('div');
+    c.className='confetti '+shapes[Math.floor(Math.random()*3)];
+    c.style.left=Math.random()*100+'%';
+    c.style.top=-(Math.random()*60+10)+'px';
+    c.style.background=colors[Math.floor(Math.random()*colors.length)];
+    c.style.animationDelay=Math.random()*2.5+'s';
+    c.style.animationDuration=(Math.random()*1.8+2.2)+'s';
+    container.appendChild(c);
+  }
+  container.classList.add('show');
+  setTimeout(()=>{container.classList.remove('show');container.innerHTML='';},3500);
+}
+})();
+</script>
+</body>
+</html>
