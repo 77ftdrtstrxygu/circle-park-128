@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>圆的面积 · 课后练习</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Microsoft YaHei','PingFang SC',sans-serif;
+  background:linear-gradient(160deg,#e8f5e9 0%,#e3f2fd 40%,#fff8e1 85%);
+  min-height:100vh;display:flex;justify-content:center;align-items:center;padding:16px;position:relative;overflow-x:hidden;
+}
+body::before{content:'';position:fixed;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 50% 40% at 15% 20%,rgba(67,160,71,0.08) 0%,transparent 60%),
+             radial-gradient(ellipse 40% 35% at 85% 75%,rgba(33,150,243,0.06) 0%,transparent 55%),
+             radial-gradient(ellipse 30% 25% at 50% 50%,rgba(255,213,79,0.05) 0%,transparent 50%);
+  inset:0;}
+.deco{position:fixed;pointer-events:none;z-index:0;border-radius:50%;background:rgba(67,160,71,0.06)}
+.deco.d1{width:200px;height:200px;top:-60px;right:-60px}
+.deco.d2{width:140px;height:140px;bottom:-40px;left:5%}
+.deco.d3{width:100px;height:100px;top:40%;left:-30px;border-radius:40% 60% 60% 40%;background:rgba(255,213,79,0.05)}
+
+.container{width:100%;max-width:620px;position:relative;z-index:1;margin:0 auto}
+.header{background:linear-gradient(135deg,#388E3C,#43A047,#66BB6A);color:#fff;padding:22px 28px;text-align:center;border-radius:22px 22px 0 0;box-shadow:0 4px 20px rgba(67,160,71,0.25)}
+.header h1{font-size:25px;letter-spacing:1px;text-shadow:0 1px 3px rgba(0,0,0,0.12)}
+.header .sub{font-size:13px;opacity:0.8;margin-top:5px}
+
+.progress-wrap{background:#fff;padding:20px 32px 10px;display:flex;align-items:center;justify-content:center;gap:0;position:relative}
+.step-item{display:flex;align-items:center}
+.step-circle{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:bold;background:#e8e8e8;color:#999;transition:all 0.45s;position:relative;z-index:1}
+.step-circle.done.correct{background:#27AE60;color:#fff;box-shadow:0 0 0 6px rgba(39,174,96,0.12)}
+.step-circle.done.wrong{background:#E74C3C;color:#fff;box-shadow:0 0 0 6px rgba(231,76,60,0.12)}
+.step-circle.current{background:#43A047;color:#fff;box-shadow:0 0 0 10px rgba(67,160,71,0.15);animation:stepPulse 1.5s infinite}
+@keyframes stepPulse{0%,100%{box-shadow:0 0 0 6px rgba(67,160,71,0.15)}50%{box-shadow:0 0 0 18px rgba(67,160,71,0.05)}}
+.step-line{width:48px;height:3px;background:#e0e0e0;transition:background 0.5s}
+.step-line.done{background:#27AE60}
+
+.stats-pill{background:#fff;padding:8px 32px 14px;display:flex;justify-content:center;gap:18px}
+.stats-pill span{font-size:13px;font-weight:bold;padding:4px 14px;border-radius:20px}
+.stats-pill .green{background:#e8f5e9;color:#2E7D32}
+.stats-pill .red{background:#fdeaea;color:#C62828}
+
+.quiz-body{background:#fff;padding:0 28px 28px;border-radius:0 0 22px 22px;box-shadow:0 4px 20px rgba(0,0,0,0.06)}
+
+.question-wrap{display:none;animation:qIn 0.45s ease-out}
+.question-wrap.active{display:block}
+@keyframes qIn{0%{opacity:0;transform:translateX(30px)}100%{opacity:1;transform:translateX(0)}}
+
+.q-badge{display:inline-block;padding:4px 14px;border-radius:14px;font-size:12px;font-weight:bold;margin-bottom:14px}
+.q-badge.bg-pizza{background:#FFF3E0;color:#E65100}
+.q-badge.bg-flower{background:#FCE4EC;color:#C62828}
+.q-badge.bg-fountain{background:#E3F2FD;color:#1565C0}
+
+.q-content{display:flex;align-items:flex-start;gap:14px;margin-bottom:20px}
+.q-icon{width:60px;height:60px;min-width:60px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:34px;transition:all 0.3s}
+.q-icon.bg-pizza{background:linear-gradient(135deg,#FFF3E0,#FFE0B2)}
+.q-icon.bg-flower{background:linear-gradient(135deg,#FCE4EC,#F8BBD0)}
+.q-icon.bg-fountain{background:linear-gradient(135deg,#E3F2FD,#BBDEFB)}
+.q-text{font-size:16px;color:#333;line-height:1.7;flex:1}
+.q-text b{color:#43A047}
+
+.options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+@media(max-width:500px){.options{grid-template-columns:1fr}}
+.opt-btn{display:flex;align-items:center;gap:10px;padding:14px 16px;border:2px solid #e8e8e8;border-radius:14px;background:#fff;cursor:pointer;transition:all 0.25s;font-family:inherit;text-align:left;box-shadow:0 2px 8px rgba(0,0,0,0.04)}
+.opt-btn:hover{border-color:#43A047;background:#f8fef8;transform:translateY(-2px);box-shadow:0 6px 18px rgba(67,160,71,0.1)}
+.opt-letter{width:32px;height:32px;min-width:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:bold;background:#f5f5f5;color:#999;transition:all 0.3s}
+.opt-btn:hover .opt-letter{background:#e8f5e9;color:#43A047}
+.opt-label{font-size:14px;color:#444;line-height:1.4}
+.opt-btn.correct-reveal{border-color:#27AE60;background:#e8f8ef}.opt-btn.correct-reveal .opt-letter{background:#27AE60;color:#fff}
+.opt-btn.wrong-reveal{border-color:#E74C3C;background:#fef0f0;animation:shake 0.5s}.opt-btn.wrong-reveal .opt-letter{background:#E74C3C;color:#fff}
+.opt-btn:disabled{pointer-events:none;opacity:0.65}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+.fb-box{display:none;border-radius:14px;padding:16px 18px;margin-bottom:14px;animation:fbIn 0.4s}
+.fb-box.show{display:flex;gap:12px;align-items:flex-start}
+.fb-box.correct{background:#e8f5e9;border-left:4px solid #27AE60}
+.fb-box.wrong{background:#fef0f0;border-left:4px solid #E74C3C}
+.fb-icon{font-size:28px;min-width:32px;text-align:center}
+.fb-text{font-size:14px;line-height:1.7;color:#555}
+.fb-text b{color:#27AE60}
+.fb-box.wrong .fb-text b{color:#E74C3C}
+@keyframes fbIn{0%{opacity:0;max-height:0}100%{opacity:1;max-height:200px}}
+
+.btn-next{padding:12px 36px;border:none;border-radius:14px;background:linear-gradient(135deg,#43A047,#66BB6A);color:#fff;font-size:16px;font-weight:bold;cursor:pointer;display:none;margin:0 auto;font-family:inherit;transition:all 0.3s;box-shadow:0 4px 14px rgba(67,160,71,0.25)}
+.btn-next.show{display:block}
+.btn-next:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(67,160,71,0.35)}
+
+.result-wrap{display:none;animation:rIn 0.55s ease-out}
+.result-wrap.show{display:block}
+@keyframes rIn{0%{opacity:0;transform:scale(0.88) translateY(16px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+
+.r-icon{font-size:76px;text-align:center;margin-bottom:14px}
+.r-title{font-size:22px;color:#333;font-weight:bold;text-align:center;margin-bottom:10px;line-height:1.5}
+.r-detail{font-size:15px;color:#666;text-align:center;margin-bottom:22px;line-height:1.6}
+.r-score-ring{text-align:center;margin-bottom:18px}
+.r-score-ring .big-num{font-size:48px;font-weight:bold;display:inline-block;padding:10px 30px;border-radius:20px}
+.r-score-ring .big-num.green{background:#e8f5e9;color:#27AE60}
+.r-score-ring .big-num.orange{background:#fff8e1;color:#F39C12}
+.r-score-ring .big-num.red{background:#fdeaea;color:#E74C3C}
+.r-score-ring .of{font-size:18px;color:#999}
+
+.review-wrap{text-align:left;margin:12px 0 20px}
+.review-wrap h4{color:#666;margin-bottom:10px;font-size:15px}
+.review-card{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;margin:6px 0;border-radius:12px;font-size:14px;line-height:1.5;transition:all 0.3s}
+.review-card.correct{background:#f5fef5;border:1px solid #d5f0d5}
+.review-card.wrong{background:#fefaf5;border:1px solid #ffe0c0}
+.review-card .r-status{font-size:18px;min-width:22px;text-align:center}
+.review-card .r-content{flex:1}
+.review-card .r-answer{color:#27AE60;font-weight:bold;margin-top:4px}
+
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn-act{padding:13px 32px;border:none;border-radius:14px;font-size:16px;font-weight:bold;cursor:pointer;font-family:inherit;transition:all 0.3s}
+.btn-act.green{background:linear-gradient(135deg,#43A047,#66BB6A);color:#fff;box-shadow:0 4px 16px rgba(67,160,71,0.25)}
+.btn-act.green:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(67,160,71,0.35)}
+.btn-act.gold{background:linear-gradient(135deg,#F9A825,#FFD54F,#F9A825);color:#5D4037;box-shadow:0 4px 16px rgba(249,168,37,0.3);animation:goldGlow 2s ease-in-out infinite}
+.btn-act.gold:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(249,168,37,0.45)}
+@keyframes goldGlow{0%,100%{box-shadow:0 4px 16px rgba(249,168,37,0.3)}50%{box-shadow:0 4px 28px rgba(249,168,37,0.5)}}
+.btn-act.white{background:#fff;color:#43A047;border:2px solid #43A047}
+.btn-act.white:hover{background:#f1f8e9}
+.btn-act.orange{background:#FFF8E1;color:#E65100;border:2px solid #FFA726}
+.btn-act.orange:hover{background:#FFE0B2}
+
+@keyframes starBounce{0%{opacity:0;transform:scale(0.3)}60%{transform:scale(1.2)}100%{opacity:1;transform:scale(1)}}
+.stars-row{text-align:center;margin:12px 0;font-size:44px;letter-spacing:4px}
+.stars-row span{display:inline-block;opacity:0;animation:starBounce 0.5s ease-out forwards}
+
+.celebration-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:99}
+.celebration-overlay.show{display:block}
+.confetti{position:absolute;width:12px;height:12px;border-radius:3px;animation:cf 2.8s ease-out forwards}
+.confetti.circle{border-radius:50%}
+.confetti.star{clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
+@keyframes cf{0%{transform:translateY(-80px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(900deg);opacity:0}}
+</style>
+</head>
+<body>
+<div class="deco d1"></div><div class="deco d2"></div><div class="deco d3"></div>
+
+<div class="container">
+  <div class="header">
+    <h1>📐 圆的面积 · 课后练习</h1>
+    <div class="sub">共 2 题 · 生活情景应用</div>
+  </div>
+
+  <div class="progress-wrap" id="progressWrap"></div>
+  <div class="stats-pill">
+    <span class="green" id="correctCount">✅ 0</span>
+    <span class="red" id="wrongCount">❌ 0</span>
+  </div>
+
+  <div class="quiz-body">
+    <div id="quizArea"></div>
+    <div class="result-wrap" id="resultWrap"></div>
+  </div>
+</div>
+<div class="celebration-overlay" id="celebration"></div>
+
+<script>
+(function(){
+const quizArea = document.getElementById('quizArea');
+const resultWrap = document.getElementById('resultWrap');
+
+const bgClasses = ['bg-pizza','bg-flower'];
+const questions = [
+  { scene:'🍕', title:'小明点了一个 <b>12寸</b> 的圆形披萨。披萨的"寸"指的是直径，那这个披萨的面积大约是多少平方寸？（π≈3.14）',
+    options:['3.14 × 12 ≈ 37.68 平方寸','3.14 × 6² ≈ 113.04 平方寸','3.14 × 12² ÷ 4 ≈ 113.04 平方寸','3.14 × 3² ≈ 28.26 平方寸'],
+    correct:1,
+    explain:'披萨直径 = 12寸 → 半径 r = 6寸。<br>圆的面积 S = π × r² = 3.14 × 6² = 3.14 × 36 = <b>113.04 平方寸</b>。<br>选项B正确。选项A误用直径计算；选项D半径取成了3。' },
+  { scene:'🌸', title:'学校要建一个半径为 <b>3米</b> 的圆形花坛。园艺工人需要购买多少平方米的营养土来铺满它？（π≈3.14）',
+    options:['3.14 × 6² ≈ 113.04 平方米','3.14 × 3 ≈ 9.42 平方米','3.14 × 3² ≈ 28.26 平方米','2 × 3.14 × 3² ≈ 56.52 平方米'],
+    correct:2,
+    explain:'半径 r = 3米。<br>圆的面积 S = π × r² = 3.14 × 3² = 3.14 × 9 = <b>28.26 平方米</b>。<br>选项C正确。选项A误用直径；选项B误算πr；选项D多乘了2。' }
+];
+
+let currentQ = 0;
+let answers = [];
+let quizDone = false;
+const letters = 'ABCD';
+
+function renderProgress(){
+  let h = '';
+  for(let i=0;i<2;i++){
+    let cls = 'step-circle';
+    if(i < answers.length) cls += answers[i].correct ? ' done correct' : ' done wrong';
+    else if(i === currentQ) cls += ' current';
+    h += '<div class="step-item"><div class="'+cls+'">'+(i+1)+'</div></div>';
+    if(i<1){ const lc = i < answers.length ? ' done' : ''; h += '<div class="step-line'+lc+'"></div>'; }
+  }
+  document.getElementById('progressWrap').innerHTML = h;
+}
+
+function renderQuestion(){
+  renderProgress();
+  const cn = answers.filter(a=>a.correct).length;
+  const wn = answers.length - cn;
+  document.getElementById('correctCount').textContent = '✅ ' + cn;
+  document.getElementById('wrongCount').textContent = '❌ ' + wn;
+
+  const q = questions[currentQ];
+  const bg = bgClasses[currentQ];
+  let h = '<div class="question-wrap active">';
+  h += '<div class="q-badge '+bg+'">第 '+(currentQ+1)+' / 2 题</div>';
+  h += '<div class="q-content">';
+  h += '<div class="q-icon '+bg+'">'+q.scene+'</div>';
+  h += '<div class="q-text">'+q.title+'</div>';
+  h += '</div>';
+  h += '<div class="options">';
+  q.options.forEach((opt,i)=>{
+    h += '<button class="opt-btn" data-idx="'+i+'" onclick="selectOption('+i+',this)">';
+    h += '<span class="opt-letter">'+letters[i]+'</span>';
+    h += '<span class="opt-label">'+opt+'</span>';
+    h += '</button>';
+  });
+  h += '</div>';
+  h += '<div class="fb-box" id="feedback"><div class="fb-icon" id="fbIcon"></div><div class="fb-text" id="fbText"></div></div>';
+  h += '<button class="btn-next" id="btnNext" onclick="nextQuestion()">下一题 ▶</button>';
+  h += '</div>';
+  quizArea.innerHTML = h;
+}
+
+window.selectOption = function(idx, btn){
+  if(quizDone) return;
+  const q = questions[currentQ];
+  const correct = idx === q.correct;
+  const allBtns = document.querySelectorAll('.opt-btn');
+  allBtns.forEach(b=>b.disabled=true);
+  allBtns.forEach((b,i)=>{
+    if(i===q.correct) b.classList.add('correct-reveal');
+    else if(i===idx) b.classList.add('wrong-reveal');
+  });
+
+  document.getElementById('fbIcon').textContent = correct ? '✅' : '❌';
+  const fbBox = document.getElementById('feedback');
+  fbBox.className = 'fb-box show ' + (correct?'correct':'wrong');
+  document.getElementById('fbText').innerHTML = (correct?'<b>回答正确！</b><br>':'<b>回答错误。</b><br>') + q.explain;
+
+  const nextBtn = document.getElementById('btnNext');
+  nextBtn.classList.add('show');
+  nextBtn.textContent = currentQ < 1 ? '下一题 ▶' : '查看结果 📊';
+
+  answers[currentQ] = { selected: idx, correct };
+  renderProgress();
+  const cn = answers.filter(a=>a.correct).length;
+  document.getElementById('correctCount').textContent = '✅ ' + cn;
+  document.getElementById('wrongCount').textContent = '❌ ' + (answers.length - cn);
+};
+
+window.nextQuestion = function(){
+  if(currentQ<1){ currentQ++; renderQuestion(); }
+  else showResults();
+};
+
+function showResults(){
+  quizDone = true;
+  quizArea.innerHTML = '';
+  const cn = answers.filter(a=>a.correct).length;
+  const wn = 2 - cn;
+  renderProgress();
+  document.getElementById('correctCount').textContent = '✅ ' + cn;
+  document.getElementById('wrongCount').textContent = '❌ ' + wn;
+
+  let h = '';
+  if(cn===2){
+    showCelebration();
+    h += '<div class="r-icon">🎉</div>';
+    h += '<div class="r-title">太棒了！</div>';
+    h += '<div class="r-score-ring"><span class="big-num green">2 / 2</span></div>';
+    h += '<div class="r-detail">你已经掌握了学习圆的面积所需的<span style="color:#27AE60;font-weight:bold">基础知识</span>，<br>我们开始闯关吧！</div>';
+    h += '<div class="stars-row" id="starsRow"><span>⭐</span><span>⭐</span><span>⭐</span></div>';
+    h += '<div class="btn-row" style="margin-top:20px"><button class="btn-act gold" onclick="goToPark2()">🏆 开始闯关</button></div>';
+  } else if(wn===1){
+    h += '<div class="r-icon">📖</div>';
+    h += '<div class="r-title">没关系，我们先快速回顾一下相关知识</div>';
+    h += '<div class="r-score-ring"><span class="big-num orange">'+cn+'</span><span class="of"> / 2</span></div>';
+    h += '<div class="review-wrap"><h4>📝 解题回顾</h4>';
+    questions.forEach((q,i)=>{
+      const a = answers[i];
+      h += '<div class="review-card '+(a.correct?'correct':'wrong')+'">';
+      h += '<div class="r-status">'+(a.correct?'✅':'❌')+'</div>';
+      h += '<div class="r-content"><div>'+q.scene+' '+q.title.replace(/<[^>]*>/g,'')+'</div>';
+      h += '<div class="r-answer">正确答案：'+q.options[q.correct]+'</div></div></div>';
+    });
+    h += '</div>';
+    h += '<div class="btn-row"><button class="btn-act green" onclick="restartQuiz()">🔄 重新练习</button><button class="btn-act white" onclick="goToChallenge()">🏆 去闯关练习</button></div>';
+  } else {
+    h += '<div class="r-icon">📚</div>';
+    h += '<div class="r-title">别着急，我们先补一补基础</div>';
+    h += '<div class="r-score-ring"><span class="big-num red">'+cn+'</span><span class="of"> / 2</span></div>';
+    h += '<div class="review-wrap"><h4>💡 核心知识回顾</h4>';
+    h += '<div class="review-card correct"><div class="r-status">📌</div><div class="r-content"><b>圆的面积公式：</b>S = π × r²，其中 r 是半径，π ≈ 3.14</div></div>';
+    h += '<div class="review-card wrong"><div class="r-status">⚠️</div><div class="r-content"><b>常见错误：</b>用直径代替半径、忘记平方、计算失误</div></div>';
+    h += '<div class="review-card"><div class="r-status">💡</div><div class="r-content"><b>小口诀：</b>面积算圆不用慌，半径平方乘π上！</div></div>';
+    h += '</div>';
+    h += '<div class="btn-row"><button class="btn-act green" onclick="restartQuiz()">🔄 再试一次</button><button class="btn-act orange" onclick="goToChallenge()">🏆 去闯关练习</button></div>';
+  }
+
+  resultWrap.innerHTML = h;
+  resultWrap.classList.add('show');
+
+  if(cn===3){
+    setTimeout(()=>{
+      document.querySelectorAll('#starsRow span').forEach((s,i)=>{
+        s.style.animationDelay = (i*0.2)+'s';
+      });
+    },100);
+  }
+}
+
+window.restartQuiz = function(){
+  currentQ=0; answers=[]; quizDone=false;
+  resultWrap.classList.remove('show'); resultWrap.innerHTML='';
+  document.getElementById('correctCount').textContent='✅ 0';
+  document.getElementById('wrongCount').textContent='❌ 0';
+  renderQuestion();
+};
+
+window.goToPark2 = function(){ window.location.href='park2.html'; };
+window.goToChallenge = function(){ window.location.href='challenge.html'; };
+
+function showCelebration(){
+  const c = document.getElementById('celebration');
+  c.innerHTML='';
+  const colors=['#43A047','#27AE60','#FFD93D','#66BB6A','#F9A825','#A29BFE','#4ECDC4','#FF8E53'];
+  const shapes=['confetti','confetti circle','confetti star'];
+  for(let i=0;i<80;i++){
+    const el=document.createElement('div');
+    el.className=shapes[Math.floor(Math.random()*3)];
+    el.style.left=Math.random()*100+'%';
+    el.style.top=-(Math.random()*60+10)+'px';
+    el.style.background=colors[Math.floor(Math.random()*colors.length)];
+    el.style.animationDelay=Math.random()*2.5+'s';
+    el.style.animationDuration=(Math.random()*1.8+2)+'s';
+    c.appendChild(el);
+  }
+  c.classList.add('show');
+  setTimeout(()=>{c.classList.remove('show');c.innerHTML='';},3300);
+}
+
+renderQuestion();
+})();
+</script>
+</body>
+</html>
