@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>圆的面积 · 教师智能数据看板</title>
+    <style>
+        :root {
+            --bg: #1a1d23;
+            --card: #252930;
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --blue: #7986CB;
+            --red: #f87171;
+            --green: #4ade80;
+            --orange: #f97316;
+            --yellow: #facc15;
+            --purple: #a855f7;
+            --border: #334155;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            --radius: 8px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+            background: var(--bg); color: var(--text); line-height: 1.6;
+            padding: 20px; min-height: 100vh;
+        }
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+        }
+        .header h1 { font-size: 1.8rem; color: var(--blue); }
+        .refresh-info {
+            display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--muted);
+        }
+        .refresh-status {
+            display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+            background: var(--red); animation: pulse 2s infinite;
+        }
+        .refresh-status.ready { background: var(--green); }
+        .refresh-status.error { background: var(--red); animation: none; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        .error-alert {
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid var(--red); border-radius: var(--radius);
+            padding: 15px; margin-bottom: 20px; color: var(--red);
+        }
+        .debug-info {
+            background: rgba(121, 134, 203, 0.1);
+            border: 1px solid var(--blue); border-radius: var(--radius);
+            padding: 10px; margin-bottom: 20px; font-size: 0.8rem;
+            color: var(--blue); max-height: 200px; overflow-y: auto;
+        }
+
+        /* 标签页 */
+        .tabs {
+            display: flex; gap: 10px; margin-bottom: 20px;
+            border-bottom: 1px solid var(--border); flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 10px 20px; background: transparent; border: none;
+            color: var(--muted); font-size: 1rem; cursor: pointer;
+            border-bottom: 2px solid transparent; transition: all 0.2s;
+        }
+        .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+        .tab-btn:hover { color: var(--text); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px; margin-bottom: 20px;
+        }
+        .card {
+            background: var(--card); border-radius: var(--radius);
+            padding: 20px; box-shadow: var(--shadow);
+            border-left: 4px solid var(--blue);
+        }
+        .card.found-card { border-left-color: var(--orange); }
+        .card.core-card { border-left-color: var(--blue); }
+        .card.analysis-card { border-left-color: var(--purple); }
+        .card h3 {
+            font-size: 1.1rem; margin-bottom: 15px; color: var(--muted);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .metric { font-size: 2.5rem; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+        .metric-sub { font-size: 0.85rem; color: var(--muted); }
+
+        .radar-container { grid-column: 1 / -1; padding: 20px; }
+        .radar-wrap { max-width: 800px; margin: 0 auto; text-align: center; }
+        .radar-wrap h3 { font-size: 1.2rem; margin-bottom: 15px; color: var(--blue); }
+        #radarCanvas { background: var(--card); border-radius: var(--radius); padding: 10px; }
+
+        .table-container { grid-column: 1 / -1; max-height: 500px; overflow-y: auto; }
+        .table-container table { width: 100%; border-collapse: collapse; }
+        .table-container th, .table-container td {
+            padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border);
+        }
+        .table-container th {
+            background: rgba(30, 41, 59, 0.5); font-size: 0.9rem;
+            color: var(--blue); position: sticky; top: 0; z-index: 10;
+        }
+        .table-container td { font-size: 0.85rem; }
+        .score-high { color: var(--green); }
+        .score-medium { color: var(--orange); }
+        .score-low { color: var(--red); }
+        .btn {
+            padding: 6px 12px; border: none; border-radius: 4px;
+            cursor: pointer; font-size: 0.8rem; transition: all 0.2s;
+        }
+        .btn-danger {
+            background: rgba(248, 113, 113, 0.2); color: var(--red);
+            border: 1px solid var(--red);
+        }
+        .btn-danger:hover { background: var(--red); color: white; }
+        .btn-primary { background: var(--blue); color: white; }
+        .btn-primary:hover { background: #5C6BC0; }
+        .btn-purple { background: var(--purple); color: white; margin-left: 10px; }
+        .btn-purple:hover { background: #9333ea; }
+
+        .loading {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(26, 29, 35, 0.9);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 999; font-size: 1.2rem; color: var(--blue);
+        }
+
+        /* 单题分析 */
+        .question-card {
+            margin-bottom: 20px; padding: 15px;
+            background: rgba(0, 0, 0, 0.1); border-radius: var(--radius);
+            border-left: 3px solid var(--blue);
+        }
+        .question-card.found { border-left-color: var(--orange); }
+        .question-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px;
+        }
+        .question-title { font-weight: 600; color: var(--text); }
+        .question-score { display: flex; gap: 15px; font-size: 0.9rem; }
+        .progress-bar {
+            width: 100%; height: 8px; background: var(--border);
+            border-radius: 4px; overflow: hidden; margin: 8px 0;
+        }
+        .progress-fill { height: 100%; transition: width 0.3s; }
+        .progress-fill.high { background: var(--green); }
+        .progress-fill.medium { background: var(--orange); }
+        .progress-fill.low { background: var(--red); }
+
+        /* 板块汇总 */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px; margin-bottom: 20px;
+        }
+        .summary-card {
+            background: rgba(0, 0, 0, 0.1); border-radius: var(--radius); padding: 15px;
+        }
+        .summary-card h4 {
+            margin-bottom: 10px; color: var(--blue);
+            border-bottom: 1px solid var(--border); padding-bottom: 5px;
+        }
+        .summary-item {
+            display: flex; justify-content: space-between;
+            margin: 5px 0; font-size: 0.9rem;
+        }
+
+        /* 智能分析 */
+        .analysis-section {
+            margin-bottom: 25px; padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+        .analysis-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .analysis-section h4 {
+            margin-bottom: 12px; color: var(--purple); font-size: 1.1rem;
+        }
+        .analysis-item { margin: 8px 0; padding-left: 15px; position: relative; }
+        .analysis-item::before {
+            content: "•"; position: absolute; left: 0; color: var(--blue);
+        }
+        .warning { color: var(--red); font-weight: 600; }
+        .attention { color: var(--orange); font-weight: 600; }
+        .good { color: var(--green); font-weight: 600; }
+        .teaching-suggestion {
+            background: rgba(168, 85, 247, 0.1);
+            border-left: 3px solid var(--purple);
+            padding: 12px 15px; border-radius: 4px; margin-top: 15px;
+        }
+        .teaching-suggestion h5 { color: var(--purple); margin-bottom: 8px; }
+        .copy-btn { margin-top: 20px; text-align: right; }
+
+        @media (max-width: 768px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .metric { font-size: 2rem; }
+            .tabs { flex-wrap: wrap; }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">数据加载中...</div>
+
+    <div class="header">
+        <h1>📐 圆的面积 · 教师智能数据看板</h1>
+        <div class="refresh-info">
+            <span class="refresh-status" id="refreshStatus"></span>
+            <span>最后刷新：<span id="lastRefresh">--:--:--</span> | 每10秒自动刷新</span>
+            <button class="btn btn-primary" onclick="initData()">手动刷新</button>
+        </div>
+    </div>
+
+    <div id="errorAlert" class="error-alert" style="display: none;"></div>
+    <div id="debugInfo" class="debug-info" style="display: none;">
+        <strong>调试信息：</strong><br>
+        <div id="debugContent"></div>
+    </div>
+
+    <!-- 标签页导航 -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('overview')">📊 总览</button>
+        <button class="tab-btn" onclick="switchTab('analysis')">🧠 智能分析</button>
+        <button class="tab-btn" onclick="switchTab('questions')">📝 单题分析</button>
+        <button class="tab-btn" onclick="switchTab('summary')">📈 板块汇总</button>
+        <button class="tab-btn" onclick="switchTab('students')">👥 学生详情</button>
+        <button class="tab-btn" onclick="toggleDebug()">🔧 调试模式</button>
+    </div>
+
+    <!-- 总览标签页 -->
+    <div class="tab-content active" id="tab-overview">
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3><i>📊</i> 总提交人数</h3>
+                <div class="metric" id="totalSubmissions">0</div>
+                <div class="metric-sub">参与答题的学生总数</div>
+            </div>
+            <div class="card">
+                <h3><i>🎯</i> 总分平均分</h3>
+                <div class="metric" id="totalAvgScore">0</div>
+                <div class="metric-sub">满分60分 | 正确率 <span id="totalAccuracy">0</span>%</div>
+            </div>
+            <div class="card found-card">
+                <h3><i>🧱</i> 基础计算平均分</h3>
+                <div class="metric" id="foundAvgScore">0</div>
+                <div class="metric-sub">满分30分 | 正确率 <span id="foundAccuracy">0</span>%</div>
+            </div>
+            <div class="card core-card">
+                <h3><i>⚙️</i> 综合应用平均分</h3>
+                <div class="metric" id="coreAvgScore">0</div>
+                <div class="metric-sub">满分30分 | 正确率 <span id="coreAccuracy">0</span>%</div>
+            </div>
+            <div class="card radar-container">
+                <div class="radar-wrap">
+                    <h3>知识点掌握情况汇总（全体学生）</h3>
+                    <canvas id="radarCanvas" width="800" height="400"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 智能分析标签页 -->
+    <div class="tab-content" id="tab-analysis">
+        <div class="card analysis-card">
+            <h3><i>🧠</i> 实时教学分析报告</h3>
+            <div id="analysisReport"></div>
+            <div class="copy-btn">
+                <button class="btn btn-purple" onclick="copyAnalysisReport()">📋 一键复制分析报告</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 单题分析标签页 -->
+    <div class="tab-content" id="tab-questions">
+        <div class="card table-container">
+            <h3><i>📝</i> 每道题答题情况详情（按正确率从低到高排序）</h3>
+            <div id="questionAnalysis"></div>
+        </div>
+    </div>
+
+    <!-- 板块汇总标签页 -->
+    <div class="tab-content" id="tab-summary">
+        <div class="card">
+            <h3><i>📈</i> 多维度板块汇总分析</h3>
+            <h4 style="margin: 20px 0 10px; color: var(--orange);">🧱 基础计算模块汇总</h4>
+            <div class="summary-grid" id="foundSummary"></div>
+            <h4 style="margin: 20px 0 10px; color: var(--blue);">⚙️ 综合应用模块汇总</h4>
+            <div class="summary-grid" id="coreSummary"></div>
+            <h4 style="margin: 20px 0 10px; color: var(--yellow);">📋 题型汇总</h4>
+            <div class="summary-grid" id="typeSummary"></div>
+            <h4 style="margin: 20px 0 10px; color: var(--green);">🧠 知识点汇总</h4>
+            <div class="summary-grid" id="conceptSummary"></div>
+        </div>
+    </div>
+
+    <!-- 学生详情标签页 -->
+    <div class="tab-content" id="tab-students">
+        <div class="card table-container">
+            <h3><i>👥</i> 学生答题详情（点击隐藏按钮可移除测试数据）</h3>
+            <table id="studentTable">
+                <thead>
+                    <tr>
+                        <th>姓名</th>
+                        <th>班级</th>
+                        <th>学号</th>
+                        <th>总分</th>
+                        <th>基础计算</th>
+                        <th>综合应用</th>
+                        <th>用时</th>
+                        <th>提交时间</th>
+                        <th>正确率</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="studentTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // API配置
+        const GET_DATA_API_URL = 'https://quickform.cn/api/2syoepnuvq/all';
+        const REFRESH_INTERVAL = 10000;
+        let debugMode = false;
+
+        // ========== 题目完整配置 ==========
+        const QUESTIONS = {
+            q1: { title: '圆的面积公式识别', type: 'mc', max: 10, module: 'found', concept: '公式识记',
+                errorAnalysis: '学生容易混淆面积公式和周长公式，常误选2πr或πr，对r²的含义理解不深' },
+            q2: { title: '已知半径求面积', type: 'fill', max: 10, module: 'found', concept: '正向计算',
+                errorAnalysis: '部分学生忘记平方运算，直接用3.14乘半径，运算顺序错误' },
+            q3: { title: '已知直径求面积', type: 'fill', max: 10, module: 'found', concept: '直径半径转换',
+                errorAnalysis: '常见错误是直接将直径代入公式，忘记先除以2求半径，审题不仔细' },
+            q4: { title: '已知面积求半径', type: 'fill', max: 10, module: 'core', concept: '逆向思维',
+                errorAnalysis: '学生逆向运算能力薄弱，容易直接用面积除以π后忘记开平方' },
+            q5: { title: '错例辨析与纠正', type: 'judge', max: 10, module: 'core', concept: '辨析纠错',
+                errorAnalysis: '学生能判断对错，但说不清错误原因，正确计算时常仍犯平方遗漏的问题' },
+            q6: { title: '半径扩大的面积倍数', type: 'fill', max: 10, module: 'core', concept: '倍数关系',
+                errorAnalysis: '学生容易按线性关系理解，误答3倍，不理解面积与半径平方成正比的规律' }
+        };
+
+        const CONCEPTS = ['公式识记', '正向计算', '直径半径转换', '逆向思维', '辨析纠错', '倍数关系'];
+        
+        // 知识点映射
+        const Q_MAP = {
+            q1: '公式识记', q2: '正向计算', q3: '直径半径转换',
+            q4: '逆向思维', q5: '辨析纠错', q6: '倍数关系'
+        };
+
+        // 教学建议库
+        const TEACHING_SUGGESTIONS = {
+            '公式识记': '建议结合圆面积推导的剪拼过程，帮助学生理解公式中r²的含义，避免死记硬背',
+            '正向计算': '建议强调"先平方、再乘π"的运算顺序，通过分步练习强化计算规范',
+            '直径半径转换': '建议读题时先圈出关键词，明确给的是半径还是直径，养成先换算再计算的习惯',
+            '逆向思维': '建议补充逆运算专项练习，结合画图辅助理解，明确面积和半径的对应关系',
+            '辨析纠错': '建议收集学生常见错题，开展错题分析课，让学生自己找错误、说原因',
+            '倍数关系': '建议通过举例验证的方式，让学生自主探究半径变化与面积变化的规律，理解平方倍关系'
+        };
+
+        // 隐藏数据ID存储
+        let hiddenSubmissions = JSON.parse(localStorage.getItem('hiddenSubmissions_circle') || '[]');
+
+        // DOM元素
+        const loadingEl = document.getElementById('loading');
+        const refreshStatusEl = document.getElementById('refreshStatus');
+        const lastRefreshEl = document.getElementById('lastRefresh');
+        const errorAlertEl = document.getElementById('errorAlert');
+        const debugInfoEl = document.getElementById('debugInfo');
+        const debugContentEl = document.getElementById('debugContent');
+        const analysisReportEl = document.getElementById('analysisReport');
+
+        // 总览元素
+        const totalSubmissionsEl = document.getElementById('totalSubmissions');
+        const totalAvgScoreEl = document.getElementById('totalAvgScore');
+        const totalAccuracyEl = document.getElementById('totalAccuracy');
+        const foundAvgScoreEl = document.getElementById('foundAvgScore');
+        const foundAccuracyEl = document.getElementById('foundAccuracy');
+        const coreAvgScoreEl = document.getElementById('coreAvgScore');
+        const coreAccuracyEl = document.getElementById('coreAccuracy');
+        const radarCanvasEl = document.getElementById('radarCanvas');
+        const radarCtx = radarCanvasEl.getContext('2d');
+
+        const studentTableBodyEl = document.getElementById('studentTableBody');
+        const questionAnalysisEl = document.getElementById('questionAnalysis');
+        const foundSummaryEl = document.getElementById('foundSummary');
+        const coreSummaryEl = document.getElementById('coreSummary');
+        const typeSummaryEl = document.getElementById('typeSummary');
+        const conceptSummaryEl = document.getElementById('conceptSummary');
+
+        // ========== 工具函数 ==========
+        function debugLog(message, data) {
+            if (!debugMode) return;
+            const timestamp = new Date().toLocaleTimeString();
+            let log = `[${timestamp}] ${message}`;
+            if (data) log += `: ${JSON.stringify(data, null, 2)}`;
+            debugContentEl.innerHTML += log + '<br>';
+            debugContentEl.scrollTop = debugContentEl.scrollHeight;
+        }
+
+        function toggleDebug() {
+            debugMode = !debugMode;
+            debugInfoEl.style.display = debugMode ? 'block' : 'none';
+            if (debugMode) debugLog('调试模式已开启');
+        }
+
+        function formatTime(date) { return date.toTimeString().split(' ')[0]; }
+
+        function formatDateTime(timeStr) {
+            if (!timeStr) return '未知';
+            try {
+                const date = new Date(timeStr);
+                return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+            } catch (e) { return timeStr; }
+        }
+
+        function formatUsedTime(seconds) {
+            if (!seconds) return '未知';
+            const min = Math.floor(seconds / 60);
+            const sec = seconds % 60;
+            return `${min}分${sec}秒`;
+        }
+
+        function getScoreClass(score, max) {
+            if (typeof score !== 'number' || typeof max !== 'number' || max === 0) return 'score-low';
+            const pct = score / max;
+            if (pct >= 0.8) return 'score-high';
+            if (pct >= 0.6) return 'score-medium';
+            return 'score-low';
+        }
+
+        function getProgressClass(pct) {
+            if (pct >= 0.8) return 'high';
+            if (pct >= 0.6) return 'medium';
+            return 'low';
+        }
+
+        function showError(message) {
+            errorAlertEl.textContent = `❌ 错误：${message}`;
+            errorAlertEl.style.display = 'block';
+            refreshStatusEl.classList.remove('ready');
+            refreshStatusEl.classList.add('error');
+            debugLog('错误', message);
+        }
+
+        function hideError() {
+            errorAlertEl.style.display = 'none';
+            refreshStatusEl.classList.remove('error');
+        }
+
+        function closeLoading() {
+            loadingEl.style.display = 'none';
+            refreshStatusEl.classList.add('ready');
+            lastRefreshEl.textContent = formatTime(new Date());
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            event.target.classList.add('active');
+            debugLog('切换到标签页', tabName);
+        }
+
+        function hideSubmission(index) {
+            if (confirm('确定要隐藏这条数据吗？刷新页面后会重新显示，如需永久删除请联系API管理员')) {
+                hiddenSubmissions.push(index);
+                localStorage.setItem('hiddenSubmissions_circle', JSON.stringify(hiddenSubmissions));
+                initData();
+            }
+        }
+
+        function copyAnalysisReport() {
+            const reportText = document.getElementById('analysisReport').innerText;
+            navigator.clipboard.writeText(reportText).then(() => {
+                alert('✅ 分析报告已复制到剪贴板');
+            }).catch(() => { alert('❌ 复制失败，请手动复制'); });
+        }
+
+        // ========== 智能分析报告生成 ==========
+        function generateAnalysisReport(metrics) {
+            if (metrics.totalSubmissions === 0) {
+                return '<p style="text-align: center; color: var(--muted);">暂无答题数据，无法生成分析报告</p>';
+            }
+
+            let report = '';
+            const overallLevel = metrics.totalAccuracy >= 80 ? '优秀' : metrics.totalAccuracy >= 60 ? '良好' : '待提高';
+            const overallColor = metrics.totalAccuracy >= 80 ? 'good' : metrics.totalAccuracy >= 60 ? 'attention' : 'warning';
+            
+            report += `
+            <div class="analysis-section">
+                <h4>📊 整体学情总结</h4>
+                <div class="analysis-item">本次检测共 <strong>${metrics.totalSubmissions}</strong> 名学生参与，班级平均分为 <strong class="${overallColor}">${metrics.totalAvgScore}/60</strong>，整体正确率 <strong class="${overallColor}">${metrics.totalAccuracy}%</strong>，掌握情况 <strong class="${overallColor}">${overallLevel}</strong>。</div>
+                <div class="analysis-item">基础计算模块平均分 <strong class="${getScoreClass(metrics.foundAvgScore, 30)}">${metrics.foundAvgScore}/30</strong>（正确率${metrics.foundAccuracy}%），综合应用模块平均分 <strong class="${getScoreClass(metrics.coreAvgScore, 30)}">${metrics.coreAvgScore}/30</strong>（正确率${metrics.coreAccuracy}%）。</div>
+            `;
+
+            if (metrics.foundAccuracy > metrics.coreAccuracy + 10) {
+                report += `<div class="analysis-item warning">⚠️ 综合应用模块掌握明显弱于基础模块，建议重点复习逆向运算、倍数规律等拓展类知识点。</div>`;
+            } else if (metrics.coreAccuracy > metrics.foundAccuracy + 10) {
+                report += `<div class="analysis-item attention">⚠️ 基础计算模块掌握较弱，建议补全公式理解、运算规范等基础知识点。</div>`;
+            }
+            report += '</div>';
+
+            // 薄弱知识点
+            const weakConcepts = Object.entries(metrics.conceptStats)
+                .filter(([_, data]) => data.accuracy < 60)
+                .sort((a, b) => a[1].accuracy - b[1].accuracy);
+            const criticalConcepts = weakConcepts.filter(([_, data]) => data.accuracy < 50);
+
+            report += `
+            <div class="analysis-section">
+                <h4>⚠️ 薄弱知识点预警</h4>
+            `;
+            if (criticalConcepts.length > 0) {
+                report += `<div class="analysis-item warning">🚨 严重薄弱知识点（正确率<50%）：${criticalConcepts.map(([c, d]) => `${c}(${d.accuracy}%)`).join('、')}。这些知识点需要立即重点讲解！</div>`;
+            }
+            if (weakConcepts.length > 0) {
+                report += `<div class="analysis-item attention">📌 需关注知识点（正确率<60%）：${weakConcepts.map(([c, d]) => `${c}(${d.accuracy}%)`).join('、')}。建议安排专项练习。</div>`;
+            } else {
+                report += `<div class="analysis-item good">✅ 所有知识点掌握情况良好，没有明显薄弱环节。</div>`;
+            }
+            report += '</div>';
+
+            // 重点题目
+            const weakQuestions = Object.values(metrics.questionStats)
+                .filter(q => q.accuracy < 60)
+                .sort((a, b) => a.accuracy - b.accuracy)
+                .slice(0, 3);
+
+            report += `
+            <div class="analysis-section">
+                <h4>📝 重点题目讲解建议</h4>
+            `;
+            if (weakQuestions.length > 0) {
+                weakQuestions.forEach((q, index) => {
+                    report += `
+                    <div class="analysis-item">
+                        <strong>${index + 1}. ${q.qid.toUpperCase()} ${q.title}</strong>（正确率 <strong class="warning">${q.accuracy}%</strong>）
+                        <br>
+                        <span style="color: var(--muted);">常见错误：${QUESTIONS[q.qid].errorAnalysis}</span>
+                    </div>
+                    `;
+                });
+            } else {
+                report += `<div class="analysis-item good">✅ 所有题目正确率均在60%以上，学生整体掌握良好。</div>`;
+            }
+            report += '</div>';
+
+            // 题型分析
+            const mcAccuracy = metrics.moduleStats.found.mc.accuracy || 0;
+            const fillAccuracy = ((metrics.moduleStats.found.fill.accuracy || 0) + (metrics.moduleStats.core.fill.accuracy || 0)) / 2;
+            const judgeAccuracy = metrics.moduleStats.core.judge.accuracy || 0;
+
+            report += `
+            <div class="analysis-section">
+                <h4>📋 题型掌握情况分析</h4>
+                <div class="analysis-item">单选题平均正确率：<strong class="${getScoreClass(Math.round(mcAccuracy), 100)}">${Math.round(mcAccuracy)}%</strong></div>
+                <div class="analysis-item">填空题平均正确率：<strong class="${getScoreClass(Math.round(fillAccuracy), 100)}">${Math.round(fillAccuracy)}%</strong></div>
+                <div class="analysis-item">判断题平均正确率：<strong class="${getScoreClass(Math.round(judgeAccuracy), 100)}">${Math.round(judgeAccuracy)}%</strong></div>
+            `;
+            if (fillAccuracy < mcAccuracy - 15) {
+                report += `<div class="analysis-item warning">⚠️ 填空题正确率显著低于其他题型，说明学生计算准确性不足，建议加强计算训练，规范答题步骤。</div>`;
+            } else {
+                report += `<div class="analysis-item good">✅ 三种题型掌握情况均衡，学生基础知识和应用能力都比较扎实。</div>`;
+            }
+            report += '</div>';
+
+            // 分层教学
+            const scores = metrics.validStudents.map(s => s.score);
+            const excellentCount = scores.filter(s => s >= 48).length;
+            const goodCount = scores.filter(s => s >= 36 && s < 48).length;
+            const poorCount = scores.filter(s => s < 36).length;
+
+            report += `
+            <div class="analysis-section">
+                <h4>👥 分层教学建议</h4>
+                <div class="analysis-item"><strong class="good">优秀生（≥48分）：${excellentCount}人</strong>（占比${Math.round(excellentCount/metrics.totalSubmissions*100)}%）。建议布置拓展性任务，如探究圆环面积、解决生活中的圆形面积问题。</div>
+                <div class="analysis-item"><strong class="attention">中等生（36-47分）：${goodCount}人</strong>（占比${Math.round(goodCount/metrics.totalSubmissions*100)}%）。建议针对薄弱知识点进行专项辅导，加强错题分析，规范运算步骤。</div>
+                <div class="analysis-item"><strong class="warning">待提高生（<36分）：${poorCount}人</strong>（占比${Math.round(poorCount/metrics.totalSubmissions*100)}%）。建议从公式推导、基础计算抓起，结合直观操作帮助理解公式含义。</div>
+            </div>
+            `;
+
+            // 教学建议
+            if (weakConcepts.length > 0) {
+                report += `
+                <div class="teaching-suggestion">
+                    <h5>💡 课堂教学调整建议</h5>
+                    <p>根据本次检测结果，建议下节课重点讲解以下内容：</p>
+                    <ul>
+                `;
+                weakConcepts.slice(0, 3).forEach(([concept, _]) => {
+                    report += `<li><strong>${concept}：</strong>${TEACHING_SUGGESTIONS[concept] || '建议结合实例讲解，加深学生理解'}</li>`;
+                });
+                report += `
+                    </ul>
+                    <p style="margin-top: 10px;">建议用15-20分钟讲解重点错题，然后安排10分钟的针对性练习，最后进行课堂小结。</p>
+                </div>
+                `;
+            }
+            return report;
+        }
+
+        // ========== 核心数据获取 ==========
+        async function fetchData() {
+            try {
+                hideError();
+                refreshStatusEl.classList.remove('ready');
+                const response = await fetch(GET_DATA_API_URL, { method: 'GET', cache: 'no-cache' });
+                if (!response.ok) throw new Error(`API请求失败，状态码：${response.status}`);
+                const data = await response.json();
+                debugLog('获取到API数据', data);
+                if (!data || typeof data !== 'object') throw new Error('API返回的数据格式不正确');
+                return data;
+            } catch (error) {
+                console.error('❌ 数据获取失败:', error);
+                showError(`数据获取失败：${error.message}。请检查API地址是否正确，或稍后重试。`);
+                return null;
+            } finally { closeLoading(); }
+        }
+
+        // ========== 统计计算 ==========
+        function calculateAllMetrics(students) {
+            if (!Array.isArray(students) || students.length === 0) return getEmptyMetrics();
+            const validStudents = students.filter((s, index) => !hiddenSubmissions.includes(index));
+            debugLog('有效学生数量', validStudents.length);
+            if (validStudents.length === 0) return getEmptyMetrics();
+
+            const basicMetrics = calculateBasicMetrics(validStudents);
+            const questionStats = calculateQuestionStats(validStudents);
+            const moduleStats = calculateModuleStats(validStudents, questionStats);
+            const conceptStats = calculateConceptStats(validStudents, questionStats);
+
+            return { ...basicMetrics, questionStats, moduleStats, conceptStats, validStudents };
+        }
+
+        function getEmptyMetrics() {
+            return {
+                totalSubmissions: 0, totalAvgScore: 0, totalAccuracy: 0,
+                foundAvgScore: 0, foundAccuracy: 0, coreAvgScore: 0, coreAccuracy: 0,
+                questionStats: {},
+                moduleStats: {
+                    found: { total: 30, earned: 0, avg: 0, accuracy: 0,
+                        mc: { total: 10, earned: 0, avg: 0, accuracy: 0 },
+                        judge: { total: 0, earned: 0, avg: 0, accuracy: 0 },
+                        fb: { total: 20, earned: 0, avg: 0, accuracy: 0 } },
+                    core: { total: 30, earned: 0, avg: 0, accuracy: 0,
+                        mc: { total: 0, earned: 0, avg: 0, accuracy: 0 },
+                        judge: { total: 10, earned: 0, avg: 0, accuracy: 0 },
+                        fb: { total: 20, earned: 0, avg: 0, accuracy: 0 } }
+                },
+                conceptStats: CONCEPTS.reduce((acc, c) => ({ ...acc, [c]: { earned: 0, max: 0, accuracy: 0, avg: 0 } }), {}),
+                validStudents: []
+            };
+        }
+
+        function calculateBasicMetrics(students) {
+            const totalScores = students.map(s => s.score || 0);
+            const foundScores = students.map(s => s.foundScore || 0);
+            const coreScores = students.map(s => s.coreScore || 0);
+            const totalSubmissions = students.length;
+            const totalAvgScore = Math.round(totalScores.reduce((a, b) => a + b, 0) / totalSubmissions);
+            const totalAccuracy = Math.round((totalAvgScore / 60) * 100);
+            const foundAvgScore = Math.round(foundScores.reduce((a, b) => a + b, 0) / totalSubmissions);
+            const foundAccuracy = Math.round((foundAvgScore / 30) * 100);
+            const coreAvgScore = Math.round(coreScores.reduce((a, b) => a + b, 0) / totalSubmissions);
+            const coreAccuracy = Math.round((coreAvgScore / 30) * 100);
+            return { totalSubmissions, totalAvgScore, totalAccuracy, foundAvgScore, foundAccuracy, coreAvgScore, coreAccuracy };
+        }
+
+        function calculateQuestionStats(students) {
+            const stats = {};
+            Object.keys(QUESTIONS).forEach(qid => {
+                stats[qid] = {
+                    qid, ...QUESTIONS[qid],
+                    totalStudents: students.length, totalEarned: 0,
+                    maxScore: QUESTIONS[qid].max,
+                    avgScore: 0, accuracy: 0,
+                    fullScoreCount: 0, zeroScoreCount: 0
+                };
+            });
+
+            students.forEach((student) => {
+                if (student.questionScores) {
+                    Object.keys(student.questionScores).forEach(qid => {
+                        if (!stats[qid]) { debugLog(`未知题目ID: ${qid}`); return; }
+                        const score = Number(student.questionScores[qid]) || 0;
+                        stats[qid].totalEarned += score;
+                        if (score === stats[qid].maxScore) stats[qid].fullScoreCount++;
+                        if (score === 0) stats[qid].zeroScoreCount++;
+                    });
+                }
+            });
+
+            Object.keys(stats).forEach(qid => {
+                const q = stats[qid];
+                if (q.totalStudents > 0) {
+                    q.avgScore = (q.totalEarned / q.totalStudents).toFixed(1);
+                    q.accuracy = Math.round((q.totalEarned / (q.maxScore * q.totalStudents)) * 100);
+                }
+            });
+            return stats;
+        }
+
+        function calculateModuleStats(students, questionStats) {
+            const modules = {
+                found: { total: 30, earned: 0,
+                    mc: { total: 10, earned: 0 },
+                    judge: { total: 0, earned: 0 },
+                    fb: { total: 20, earned: 0 } },
+                core: { total: 30, earned: 0,
+                    mc: { total: 0, earned: 0 },
+                    judge: { total: 10, earned: 0 },
+                    fb: { total: 20, earned: 0 } }
+            };
+
+            Object.keys(questionStats).forEach(qid => {
+                const q = questionStats[qid];
+                const module = q.module;
+                const type = q.type === 'mc' ? 'mc' : q.type === 'judge' ? 'judge' : 'fb';
+                modules[module].earned += q.totalEarned;
+                modules[module][type].earned += q.totalEarned;
+            });
+
+            const totalStudents = students.length;
+            Object.keys(modules).forEach(module => {
+                const m = modules[module];
+                m.avg = totalStudents > 0 ? Math.round(m.earned / totalStudents) : 0;
+                m.accuracy = (m.total * totalStudents) > 0 ? Math.round((m.earned / (m.total * totalStudents)) * 100) : 0;
+                ['mc', 'judge', 'fb'].forEach(type => {
+                    if (m[type].total > 0) {
+                        m[type].avg = totalStudents > 0 ? (m[type].earned / totalStudents).toFixed(1) : 0;
+                        m[type].accuracy = (m[type].total * totalStudents) > 0 ? Math.round((m[type].earned / (m[type].total * totalStudents)) * 100) : 0;
+                    }
+                });
+            });
+            return modules;
+        }
+
+        function calculateConceptStats(students, questionStats) {
+            const stats = CONCEPTS.reduce((acc, c) => ({ ...acc, [c]: { earned: 0, max: 0 } }), {});
+            Object.keys(questionStats).forEach(qid => {
+                const q = questionStats[qid];
+                const concept = Q_MAP[qid];
+                if (!stats[concept]) { debugLog(`未知知识点: ${concept}`); return; }
+                stats[concept].earned += q.totalEarned;
+                stats[concept].max += q.maxScore * q.totalStudents;
+            });
+
+            const totalStudents = students.length;
+            Object.keys(stats).forEach(concept => {
+                const s = stats[concept];
+                s.accuracy = s.max > 0 ? Math.round((s.earned / s.max) * 100) : 0;
+                s.avg = totalStudents > 0 ? (s.earned / totalStudents).toFixed(1) : 0;
+            });
+            return stats;
+        }
+
+        // ========== 渲染函数 ==========
+        function renderBasicMetrics(metrics) {
+            totalSubmissionsEl.textContent = metrics.totalSubmissions;
+            totalAvgScoreEl.textContent = `${metrics.totalAvgScore}/60`;
+            totalAccuracyEl.textContent = metrics.totalAccuracy;
+            foundAvgScoreEl.textContent = `${metrics.foundAvgScore}/30`;
+            foundAccuracyEl.textContent = metrics.foundAccuracy;
+            coreAvgScoreEl.textContent = `${metrics.coreAvgScore}/30`;
+            coreAccuracyEl.textContent = metrics.coreAccuracy;
+            debugLog('基础指标渲染完成');
+        }
+
+        function renderRadar(conceptStats) {
+            if (!radarCtx) return;
+            const ctx = radarCtx;
+            const w = radarCanvasEl.width;
+            const h = radarCanvasEl.height;
+            const cx = w / 2;
+            const cy = h / 2;
+            const r = Math.min(cx, cy) - 40;
+            ctx.clearRect(0, 0, w, h);
+
+            // 背景网格
+            ctx.strokeStyle = '#334155'; ctx.lineWidth = 1;
+            for (let ring = 0.2; ring <= 1; ring += 0.2) {
+                ctx.beginPath();
+                for (let i = 0; i < CONCEPTS.length; i++) {
+                    const ang = -Math.PI / 2 + (2 * Math.PI / CONCEPTS.length) * i;
+                    const x = cx + r * ring * Math.cos(ang);
+                    const y = cy + r * ring * Math.sin(ang);
+                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                }
+                ctx.closePath(); ctx.stroke();
+            }
+
+            // 轴线
+            for (let i = 0; i < CONCEPTS.length; i++) {
+                const ang = -Math.PI / 2 + (2 * Math.PI / CONCEPTS.length) * i;
+                ctx.beginPath(); ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + r * Math.cos(ang), cy + r * Math.sin(ang));
+                ctx.strokeStyle = '#475569'; ctx.stroke();
+            }
+
+            // 数据
+            const values = CONCEPTS.map(concept => {
+                const s = conceptStats[concept];
+                return s.max > 0 ? s.earned / s.max : 0;
+            });
+            const pcts = values.map(v => Math.round(v * 100));
+
+            // 填充区域
+            ctx.beginPath();
+            for (let i = 0; i < CONCEPTS.length; i++) {
+                const ang = -Math.PI / 2 + (2 * Math.PI / CONCEPTS.length) * i;
+                const x = cx + r * values[i] * Math.cos(ang);
+                const y = cy + r * values[i] * Math.sin(ang);
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(121, 134, 203, 0.2)'; ctx.fill();
+            ctx.strokeStyle = '#7986CB'; ctx.lineWidth = 2; ctx.stroke();
+
+            // 数据点
+            for (let i = 0; i < CONCEPTS.length; i++) {
+                const ang = -Math.PI / 2 + (2 * Math.PI / CONCEPTS.length) * i;
+                const x = cx + r * values[i] * Math.cos(ang);
+                const y = cy + r * values[i] * Math.sin(ang);
+                ctx.beginPath(); ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                ctx.fillStyle = '#7986CB'; ctx.fill();
+            }
+
+            // 标签
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = '14px "Microsoft YaHei","PingFang SC",sans-serif';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            for (let i = 0; i < CONCEPTS.length; i++) {
+                const ang = -Math.PI / 2 + (2 * Math.PI / CONCEPTS.length) * i;
+                const x = cx + (r + 30) * Math.cos(ang);
+                const y = cy + (r + 30) * Math.sin(ang);
+                ctx.fillText(`${CONCEPTS[i]} ${pcts[i]}%`, x, y);
+            }
+            debugLog('雷达图渲染完成');
+        }
+
+        function renderStudentList(students) {
+            studentTableBodyEl.innerHTML = '';
+            if (!Array.isArray(students) || students.length === 0) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td colspan="10" style="text-align:center; color:var(--muted);">暂无学生答题数据</td>';
+                studentTableBodyEl.appendChild(tr);
+                return;
+            }
+            students.forEach((student, index) => {
+                if (!student) return;
+                const score = student.score || 0;
+                const foundScore = student.foundScore || 0;
+                const coreScore = student.coreScore || 0;
+                const accuracy = Math.round((score / 60) * 100);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${student.stuName || '未知'}</td>
+                    <td>${student.stuClass || '未知'}</td>
+                    <td>${student.stuId || '未知'}</td>
+                    <td class="${getScoreClass(score, 60)}">${score}/60</td>
+                    <td class="${getScoreClass(foundScore, 30)}">${foundScore}/30</td>
+                    <td class="${getScoreClass(coreScore, 30)}">${coreScore}/30</td>
+                    <td>${formatUsedTime(student.usedTime)}</td>
+                    <td>${formatDateTime(student.time)}</td>
+                    <td class="${getScoreClass(accuracy, 100)}">${accuracy}%</td>
+                    <td><button class="btn btn-danger" onclick="hideSubmission(${index})">隐藏</button></td>
+                `;
+                studentTableBodyEl.appendChild(tr);
+            });
+            debugLog('学生列表渲染完成');
+        }
+
+        function renderQuestionAnalysis(questionStats) {
+            questionAnalysisEl.innerHTML = '';
+            if (Object.keys(questionStats).length === 0) {
+                questionAnalysisEl.innerHTML = '<p style="color: var(--muted); text-align: center;">暂无题目数据</p>';
+                return;
+            }
+            const sortedQuestions = Object.values(questionStats).sort((a, b) => a.accuracy - b.accuracy);
+            sortedQuestions.forEach(q => {
+                const pct = q.accuracy / 100;
+                const progressClass = getProgressClass(pct);
+                let html = `
+                <div class="question-card ${q.module === 'found' ? 'found' : ''}">
+                    <div class="question-header">
+                        <div class="question-title">${q.qid.toUpperCase()}. ${q.title}</div>
+                        <div class="question-score">
+                            <span>平均分: ${q.avgScore}/${q.maxScore}</span>
+                            <span>正确率: ${q.accuracy}%</span>
+                            <span>满分: ${q.fullScoreCount}人</span>
+                            <span>零分: ${q.zeroScoreCount}人</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill ${progressClass}" style="width: ${q.accuracy}%"></div>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 0.85rem; color: var(--muted);">
+                        <strong>常见错误：</strong>${q.errorAnalysis}
+                    </div>
+                </div>
+                `;
+                questionAnalysisEl.innerHTML += html;
+            });
+            debugLog('单题分析渲染完成');
+        }
+
+        function renderModuleSummary(moduleStats, conceptStats) {
+            // 基础模块
+            const found = moduleStats.found;
+            foundSummaryEl.innerHTML = `
+                <div class="summary-card">
+                    <h4>整体情况</h4>
+                    <div class="summary-item"><span>平均分</span><span class="${getScoreClass(found.avg, 30)}">${found.avg}/30</span></div>
+                    <div class="summary-item"><span>正确率</span><span>${found.accuracy}%</span></div>
+                </div>
+                <div class="summary-card">
+                    <h4>单选题（10分）</h4>
+                    <div class="summary-item"><span>平均分</span><span>${found.mc.avg}/10</span></div>
+                    <div class="summary-item"><span>正确率</span><span>${found.mc.accuracy}%</span></div>
+                </div>
+                <div class="summary-card">
+                    <h4>填空题（20分）</h4>
+                    <div class="summary-item"><span>平均分</span><span>${found.fb.avg}/20</span></div>
+                    <div class="summary-item"><span>正确率</span><span>${found.fb.accuracy}%</span></div>
+                </div>
+            `;
+
+            // 核心模块
+            const core = moduleStats.core;
+            coreSummaryEl.innerHTML = `
+                <div class="summary-card">
+                    <h4>整体情况</h4>
+                    <div class="summary-item"><span>平均分</span><span class="${getScoreClass(core.avg, 30)}">${core.avg}/30</span></div>
+                    <div class="summary-item"><span>正确率</span><span>${core.accuracy}%</span></div>
+                </div>
+                <div class="summary-card">
+                    <h4>判断题（10分）</h4>
+                    <div class="summary-item"><span>平均分</span><span>${core.judge.avg}/10</span></div>
+                    <div class="summary-item"><span>正确率</span><span>${core.judge.accuracy}%</span></div>
+                </div>
+                <div class="summary-card">
+                    <h4>填空题（20分）</h4>
+                    <div class="summary-item"><span>平均分</span><span>${core.fb.avg}/20</span></div>
+                    <div class="summary-item"><span>正确率</span><span>${core.fb.accuracy}%</span></div>
+                </div>
+            `;
+
+            // 题型汇总
+            const totalStudents = moduleStats.found.totalStudents || 0;
+            const totalMcEarned = found.mc.earned;
+            const totalMcMax = 10 * totalStudents;
+            const totalJudgeEarned = core.judge.earned;
+            const totalJudgeMax = 10 * totalStudents;
+            const totalFbEarned = found.fb.earned + core.fb.earned;
+            const totalFbMax = 40 * totalStudents;
+            
+            const totalMcAvg = totalStudents > 0 ? (totalMcEarned / totalStudents).toFixed(1) : 0;
+            const totalJudgeAvg = totalStudents > 0 ? (totalJudgeEarned / totalStudents).toFixed(1) : 0;
+            const totalFbAvg = totalStudents > 0 ? (totalFbEarned / totalStudents).toFixed(1) : 0;
+            const totalMcAcc = totalMcMax > 0 ? Math.round((totalMcEarned / totalMcMax) * 100) : 0;
+            const totalJudgeAcc = totalJudgeMax > 0 ? Math.round((totalJudgeEarned / totalJudgeMax) * 100) : 0;
+            const totalFbAcc = totalFbMax > 0 ? Math.round((totalFbEarned / totalFbMax) * 100) : 0;
+
+            typeSummaryEl.innerHTML = `
+                <div class="summary-card">
+                    <h4>单选题（共10分）</h4>
+                    <div class="summary-item"><span>总得分</span><span>${totalMcEarned}/${totalMcMax}</span></div>
+                    <div class="summary-item"><span>平均分</span><span>${totalMcAvg}/10</span></div>
+                    <div class="summary-item"><span>正确率</span><span>${totalMcAcc}%</span></div>
+                </div>
+                <div class="summary-card">
+                    <h4>判断题（共10分）</h4>
+                    <div class="summary-item"><span>总得分</span><span>${totalJudgeEarned}/${totalJudgeMax}</span></div>
+                    <div class="summary-item"><span>平均分</span><span>${totalJudgeAvg}/10</span></div>
+                    <div class="summary-item"><span>正确率</span><span>${totalJudgeAcc}%</span></div>
+                </div>
+                <div class="summary-card">
+                    <h4>填空题（共40分）</h4>
+                    <div class="summary-item"><span>总得分</span><span>${totalFbEarned}/${totalFbMax}</span></div>
+                    <div class="summary-item"><span>平均分</span><span>${totalFbAvg}/40</span></div>
+                    <div class="summary-item"><span>正确率</span><span>${totalFbAcc}%</span></div>
+                </div>
+                <div class="summary-card">
+                    <h4>题型对比</h4>
+                    <div class="summary-item"><span>单选vs判断vs填空</span><span>${totalMcAcc}% vs ${totalJudgeAcc}% vs ${totalFbAcc}%</span></div>
+                </div>
+            `;
+
+            // 知识点汇总
+            const sortedConcepts = Object.entries(conceptStats).sort((a, b) => a[1].accuracy - b[1].accuracy);
+            let conceptHtml = '';
+            sortedConcepts.forEach(([concept, data]) => {
+                conceptHtml += `
+                <div class="summary-card">
+                    <h4>${concept}</h4>
+                    <div class="summary-item"><span>平均分</span><span>${data.avg}</span></div>
+                    <div class="summary-item"><span>正确率</span><span class="${getScoreClass(data.accuracy, 100)}">${data.accuracy}%</span></div>
+                </div>
+                `;
+            });
+            conceptSummaryEl.innerHTML = conceptHtml;
+            debugLog('板块汇总渲染完成');
+        }
+
+        // ========== 初始化 ==========
+        async function initData() {
+            debugContentEl.innerHTML = '';
+            const data = await fetchData();
+            if (!data) return;
+            const students = data.submissions || [];
+            const metrics = calculateAllMetrics(students);
+            
+            renderBasicMetrics(metrics);
+            renderRadar(metrics.conceptStats);
+            renderStudentList(metrics.validStudents);
+            renderQuestionAnalysis(metrics.questionStats);
+            renderModuleSummary(metrics.moduleStats, metrics.conceptStats);
+            analysisReportEl.innerHTML = generateAnalysisReport(metrics);
+            
+            debugLog('所有数据渲染完成');
+        }
+
+        initData();
+        setInterval(initData, REFRESH_INTERVAL);
+    </script>
+</body>
+</html>
