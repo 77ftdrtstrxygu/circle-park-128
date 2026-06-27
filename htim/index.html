@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>圆的面积 · 课后测试</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:linear-gradient(160deg,#e8eaf6,#e3f2fd,#f3e5f5);min-height:100vh;display:flex;justify-content:center;padding:20px}
+.wrap{width:100%;max-width:680px}
+.card{background:#fff;border-radius:20px;padding:26px 28px;box-shadow:0 4px 28px rgba(0,0,0,0.07);margin-bottom:16px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-header h2{font-size:21px;color:#333}
+.timer{font-size:15px;color:#888;font-weight:bold}
+
+/* 学生信息栏 */
+.student-info{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;padding:12px 16px;background:#f5f7ff;border-radius:14px;border:1px solid #e0e5ff}
+.student-info .field{display:flex;align-items:center;gap:6px}
+.student-info label{font-size:13px;color:#555;font-weight:bold;white-space:nowrap}
+.student-info input{padding:8px 12px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:inherit;outline:none;transition:border-color .3s;width:110px}
+.student-info input:focus{border-color:#5C6BC0}
+
+.q-progress{display:flex;align-items:center;gap:6px;margin-bottom:22px;flex-wrap:wrap;justify-content:center}
+.q-dot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:bold;color:#999;background:#eee;transition:all 0.4s}
+.q-dot.answered{background:#B0BEC5;color:#fff}
+.q-dot.current{background:#5C6BC0;color:#fff;box-shadow:0 0 0 6px rgba(92,107,192,0.15);animation:dpulse 1.5s infinite}
+.q-dot.correct{background:#27AE60;color:#fff}
+.q-dot.wrong{background:#E74C3C;color:#fff}
+@keyframes dpulse{0%,100%{box-shadow:0 0 0 4px rgba(92,107,192,0.12)}50%{box-shadow:0 0 0 14px rgba(92,107,192,0.05)}}
+.q-line{width:28px;height:2px;background:#ddd;transition:background 0.5s}
+.q-line.done{background:#B0BEC5}
+.q-num{font-size:13px;color:#fff;background:#5C6BC0;display:inline-block;padding:4px 14px;border-radius:14px;font-weight:bold;margin-bottom:12px}
+.q-stem{font-size:16px;color:#333;line-height:1.8;margin-bottom:20px}
+.q-stem b{color:#5C6BC0}
+.input-row{display:flex;align-items:center;gap:12px;margin:10px 0;padding:14px 18px;background:#fafafa;border-radius:14px;border-left:4px solid #e0e0e0}
+.input-row label{font-size:15px;color:#555;white-space:nowrap;font-weight:bold}
+.input-row input{padding:10px 16px;border:2px solid #e0e0e0;border-radius:10px;font-size:16px;font-family:inherit;width:150px;outline:none;transition:border-color 0.3s;text-align:center}
+.input-row input:focus{border-color:#5C6BC0}
+.input-row .unit{font-size:14px;color:#888}
+.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+@media(max-width:460px){.opt-grid{grid-template-columns:1fr}}
+.opt-btn{padding:15px 18px;border:2px solid #e0e0e0;border-radius:14px;background:#fff;cursor:pointer;transition:all 0.25s;font-family:inherit;font-size:16px;text-align:center;font-weight:bold}
+.opt-btn:hover{border-color:#5C6BC0;background:#f5f7ff}
+.opt-btn.selected{border-color:#5C6BC0;background:#e8eaf6}
+.opt-btn:disabled{pointer-events:none;opacity:0.65}
+.judge-row{display:flex;gap:12px;margin:10px 0}
+.judge-btn{padding:13px 28px;border:2px solid #e0e0e0;border-radius:14px;background:#fff;cursor:pointer;font-size:16px;font-weight:bold;font-family:inherit;transition:all 0.25s}
+.judge-btn:hover{border-color:#5C6BC0;background:#f5f7ff}
+.judge-btn.selected{border-color:#5C6BC0;background:#e8eaf6}
+.judge-btn:disabled{pointer-events:none;opacity:0.65}
+.btn-row{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.btn{padding:12px 26px;border:none;border-radius:14px;font-size:15px;font-weight:bold;cursor:pointer;font-family:inherit;transition:all 0.25s}
+.btn.primary{background:#5C6BC0;color:#fff;box-shadow:0 4px 16px rgba(92,107,192,0.25)}
+.btn.primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(92,107,192,0.35)}
+.btn.outline{background:#fff;color:#5C6BC0;border:2px solid #5C6BC0}
+.btn.outline:hover{background:#f5f7ff}
+.btn.green{background:#27AE60;color:#fff}
+.btn.green:hover{background:#219a52;transform:translateY(-2px)}
+.result-card{background:#fff;border-radius:20px;padding:24px 28px;box-shadow:0 4px 28px rgba(0,0,0,0.07);display:none;margin-top:16px}
+.result-card.show{display:block;animation:rIn 0.5s ease-out}
+@keyframes rIn{0%{opacity:0;transform:translateY(16px)}100%{opacity:1;transform:translateY(0)}}
+.result-card h3{font-size:20px;color:#333;margin-bottom:16px}
+.dim-list{margin:16px 0}
+.dim-item{display:flex;align-items:center;gap:12px;margin:10px 0;font-size:14px}
+.dim-label{width:120px;color:#555;text-align:right;font-weight:bold}
+.dim-bar-wrap{flex:1;height:12px;background:#f0f0f0;border-radius:6px;overflow:hidden}
+.dim-bar{height:100%;border-radius:6px;transition:width 0.8s}
+.dim-pct{width:48px;text-align:right;font-size:14px;color:#888;font-weight:bold}
+.weak-box{margin-top:18px;padding:14px 18px;background:#FFF8E1;border-left:4px solid #FFA726;border-radius:0 12px 12px 0;font-size:14px;color:#E65100;line-height:1.6;display:none}
+.weak-box.show{display:block}
+.review-wrap{margin-top:18px}
+.review-wrap h4{color:#666;margin-bottom:10px}
+.review-item{padding:14px 16px;margin:6px 0;border-radius:12px;font-size:14px;line-height:1.7}
+.review-item.correct{background:#f5fef5;border:1px solid #d5f0d5}
+.review-item.wrong{background:#fef5f5;border:1px solid #fdd}
+.review-item .ri-head{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.review-item .ri-icon{font-size:18px}
+.review-item .ri-title{font-weight:bold;color:#333}
+.review-item .ri-answer{color:#555}
+.review-item .ri-correct{color:#27AE60;font-weight:bold}
+.review-item .ri-wrong{color:#E74C3C;text-decoration:line-through}
+.celebration-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:99}
+.celebration-overlay.show{display:block}
+.confetti{position:absolute;width:14px;height:14px;border-radius:3px;animation:cf 2.8s ease-out forwards}
+.confetti.circle{border-radius:50%}
+@keyframes cf{0%{transform:translateY(-80px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(900deg);opacity:0}}
+
+/* 提交加载遮罩 */
+.loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,.85);display:none;justify-content:center;align-items:center;z-index:9999;font-size:1.1rem;color:#5C6BC0;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="loading-overlay" id="loadingOverlay">正在提交答题数据...</div>
+
+<div class="wrap">
+  <div class="card" id="quizCard">
+    <div class="card-header"><h2>📐 圆的面积 · 课后测试</h2><span class="timer" id="timer">⏱ 00:00</span></div>
+    
+    <!-- 学生信息填写栏 -->
+    <div class="student-info">
+      <div class="field"><label>姓名：</label><input type="text" id="stuName" placeholder="请输入姓名" required></div>
+      <div class="field"><label>班级：</label><input type="text" id="stuClass" placeholder="请输入班级" required></div>
+      <div class="field"><label>学号：</label><input type="text" id="stuId" placeholder="请输入学号" required></div>
+    </div>
+
+    <div class="q-progress" id="qProgress"></div>
+    <div id="quizBody"></div>
+    <div class="btn-row" id="navBtns" style="display:none">
+      <button class="btn outline" id="btnPrev" onclick="prevQ()" disabled>◀ 上一题</button>
+      <button class="btn primary" id="btnNext" onclick="nextQ()">下一题 ▶</button>
+      <button class="btn green" id="btnSubmit" onclick="submitAll()" style="display:none">提交完成 ✓</button>
+    </div>
+  </div>
+  <div class="result-card" id="resultCard">
+    <h3 id="resultTitle"></h3>
+    <div class="dim-list" id="dimList"></div>
+    <div class="weak-box" id="weakBox"></div>
+    <div class="review-wrap" id="reviewWrap"></div>
+    <div class="btn-row" style="margin-top:16px">
+      <button class="btn outline" onclick="resyncPendingData()">🔄 重新同步数据</button>
+      <button class="btn primary" onclick="location.reload()">🔄 重新作答</button>
+    </div>
+  </div>
+</div>
+<div class="celebration-overlay" id="celebration"></div>
+
+<script>
+(function(){
+const SUBMIT_API_URL = 'https://quickform.cn/api/2syoepnuvq';
+const SCORE_PER_Q = 10; // 每题10分，总分60分
+
+const quizBody = document.getElementById('quizBody');
+const navBtns = document.getElementById('navBtns');
+const questions = [
+  { id:'q1',stem:'圆的面积公式是哪一个？',type:'choice',choices:['S = πd','S = πr','S = πr²','S = 2πr'],correct:2,dim:'公式识记',
+    explain:'圆的面积公式为 S = πr²。A是周长(C=πd)，D是周长(C=2πr)，B漏了平方。'},
+  { id:'q2',stem:'圆的半径 <b>r = 3 cm</b>，面积约是多少平方厘米？（π≈3.14，填数字结果）',type:'fill',answer:'28.26',accepts:['28.26','28.26cm²','28.26平方厘米'],unit:'cm²',hint:'S = ',dim:'正向计算',
+    explain:'S = 3.14 × 3² = 3.14 × 9 = <b>28.26</b> cm²。'},
+  { id:'q3',stem:'圆的直径 <b>d = 8 cm</b>，面积约是多少平方厘米？（π≈3.14，填数字结果）',type:'fill',answer:'50.24',accepts:['50.24','50.24cm²','50.24平方厘米'],unit:'cm²',hint:'S = ',dim:'直径半径转换',
+    explain:'先求半径 r = d÷2 = 4 cm，再算 S = 3.14×4² = 3.14×16 = <b>50.24</b> cm²。<br>常见错误：直接用 8 代入得 200.96（忘了除以 2）。'},
+  { id:'q4',stem:'圆的面积 <b>S = 12.56 cm²</b>，半径 r 约等于多少？（π≈3.14，填数字结果）',type:'fill',answer:'2',accepts:['2','2cm','2厘米'],unit:'cm',hint:'r = ',dim:'逆向思维',
+    explain:'r² = S÷π = 12.56÷3.14 = 4，所以 r = <b>2</b> cm。'},
+  { id:'q5',stem:'小明这样算："r=5cm，S=3.14×5=15.7cm²"。他的计算对吗？正确的面积应该是？',type:'judge',judgeCorrect:false,answer:'78.5',accepts:['78.5','78.5cm²','78.5平方厘米'],dim:'辨析纠错',
+    explain:'小明<b>漏了平方</b>！应是 S = 3.14×5² = 3.14×25 = <b>78.5</b> cm²。'},
+  { id:'q6',stem:'圆的半径扩大到原来的 <b>3 倍</b>，面积扩大到原来的多少倍？（填数字）',type:'fill',answer:'9',accepts:['9','9倍'],unit:'倍',hint:'',dim:'倍数关系',
+    explain:'S = πr²，半径×3 → S\' = π(3r)² = 9πr² = <b>9 倍</b>。面积跟半径的平方成正比，不是线性关系。'}
+];
+const dimNames = ['公式识记','正向计算','直径半径转换','逆向思维','辨析纠错','倍数关系'];
+let currentQ = 0, submitted = false, timerSec = 0, timerId = null;
+let answers = {};
+
+// ========== API提交相关函数 ==========
+async function submitDataToAPI(studentData) {
+  const maxRetries = 3;
+  let retryCount = 0;
+  while (retryCount < maxRetries) {
+    try {
+      console.log(`正在提交数据（第${retryCount + 1}次尝试）...`);
+      const response = await fetch(SUBMIT_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(studentData),
+        signal: AbortSignal.timeout(10000)
+      });
+      if (!response.ok) throw new Error(`服务器返回错误：${response.status} ${response.statusText}`);
+      const result = await response.json();
+      console.log('✅ 答题数据提交成功:', result);
+      return { success: true, result, message: '提交成功！你的答题数据已同步到教师端' };
+    } catch (error) {
+      console.error(`❌ 第${retryCount + 1}次提交失败:`, error);
+      retryCount++;
+      if (retryCount >= maxRetries) {
+        let errorMessage = '数据同步失败';
+        if (error.name === 'TimeoutError') errorMessage = '网络超时，请检查你的网络连接';
+        else if (error.message.includes('Failed to fetch')) errorMessage = '无法连接到服务器，请检查网络或联系管理员';
+        else errorMessage = error.message;
+        const pendingSubmissions = JSON.parse(localStorage.getItem('pendingSubmissions_circle') || '[]');
+        pendingSubmissions.push({ data: studentData, time: new Date().toISOString(), error: errorMessage });
+        localStorage.setItem('pendingSubmissions_circle', JSON.stringify(pendingSubmissions));
+        return {
+          success: false, error: errorMessage, pending: true,
+          message: `本地成绩已生成，但数据同步失败（已尝试${maxRetries}次）。数据已保存到本地，可稍后重新同步。`
+        };
+      }
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
+}
+
+async function resyncPendingData() {
+  const pendingSubmissions = JSON.parse(localStorage.getItem('pendingSubmissions_circle') || '[]');
+  if (pendingSubmissions.length === 0) { alert('✅ 没有需要同步的数据'); return; }
+  if (!confirm(`发现${pendingSubmissions.length}条未同步的数据，是否立即同步？`)) return;
+  let successCount = 0;
+  for (let i = 0; i < pendingSubmissions.length; i++) {
+    const result = await submitDataToAPI(pendingSubmissions[i].data);
+    if (result.success) { successCount++; pendingSubmissions.splice(i, 1); i--; }
+  }
+  localStorage.setItem('pendingSubmissions_circle', JSON.stringify(pendingSubmissions));
+  if (pendingSubmissions.length === 0) alert('✅ 所有数据同步成功！');
+  else alert(`⚠️ 成功同步${successCount}条数据，还有${pendingSubmissions.length}条未同步，请稍后再试。`);
+}
+window.resyncPendingData = resyncPendingData;
+
+function startTimer(){
+  if(!timerId) timerId = setInterval(()=>{
+    timerSec++; document.getElementById('timer').textContent = '⏱ '+String(Math.floor(timerSec/60)).padStart(2,'0')+':'+String(timerSec%60).padStart(2,'0');},1000);
+}
+function hasAnswer(qi){
+  const a = answers[qi]; if(!a) return false;
+  const q = questions[qi];
+  if(q.type==='choice') return a.selected!==undefined;
+  if(q.type==='fill') return a.value!==undefined&&a.value!=='';
+  if(q.type==='judge') return a.judgeSelected!==undefined||(a.fillValue!==undefined&&a.fillValue!=='');
+  return false;
+}
+function renderProgress(){
+  let h = '';
+  for(let i=0;i<6;i++){
+    let cls = 'q-dot';
+    if(submitted){
+      const ok = gradeQ(i);
+      cls += ok?' correct':' wrong';
+    } else if(hasAnswer(i)){ cls += ' answered'; }
+    if(i===currentQ && !submitted) cls += ' current';
+    h += '<div class="'+cls+'">'+(i+1)+'</div>';
+    if(i<5) h += '<div class="q-line'+(hasAnswer(i)?' done':'')+'"></div>';
+  }
+  document.getElementById('qProgress').innerHTML = h;
+}
+function renderQuestion(){
+  renderProgress();
+  if(submitted){ quizBody.innerHTML=''; return; }
+  const q = questions[currentQ];
+  let h = '<div class="q-num">第 '+(currentQ+1)+' / 6 题</div>';
+  h += '<div class="q-stem">'+q.stem+'</div>';
+  if(q.type==='choice'){
+    const a = answers[currentQ];
+    h += '<div class="opt-grid">';
+    q.choices.forEach((c,i)=>{
+      const sel = a && a.selected===i;
+      h += '<button class="opt-btn'+(sel?' selected':'')+'" onclick="setChoice('+i+')">'+String.fromCharCode(65+i)+'. '+c+'</button>';
+    });
+    h += '</div>';
+  }
+  if(q.type==='fill'){
+    const a = answers[currentQ];
+    h += '<div class="input-row"><label>'+q.hint+'</label>';
+    h += '<input type="text" id="fillInp" placeholder="输入数字" autocomplete="off" value="'+(a?a.value||'':'')+'" oninput="saveAnswer()">';
+    if(q.unit) h += '<span class="unit">'+q.unit+'</span>';
+    h += '</div>';
+  }
+  if(q.type==='judge'){
+    const a = answers[currentQ];
+    h += '<div style="font-size:14px;color:#888;margin-bottom:8px">① 他的计算对吗？</div>';
+    h += '<div class="judge-row">';
+    ['✓ 对','✗ 错'].forEach((t,i)=>{
+      const v = i===0, sel = a && a.judgeSelected===v;
+      h += '<button class="judge-btn'+(sel?' selected':'')+'" onclick="setJudge('+v+')">'+t+'</button>';
+    });
+    h += '</div>';
+    h += '<div style="font-size:14px;color:#888;margin:14px 0 8px">② 正确的面积是？（填数字结果）</div>';
+    h += '<div class="input-row"><label>S =</label>';
+    h += '<input type="text" id="judgeFillInp" placeholder="输入数字" autocomplete="off" value="'+(a?a.fillValue||'':'')+'" oninput="saveAnswer()">';
+    h += '<span class="unit">cm²</span></div>';
+  }
+  quizBody.innerHTML = h;
+  updateNavBtns();
+}
+function saveAnswer(){
+  const q = questions[currentQ]; if(!q) return;
+  if(!answers[currentQ]) answers[currentQ] = {};
+  if(q.type==='choice'){ startTimer(); updateNavBtns(); return; }
+  if(q.type==='fill'){
+    const inp = document.getElementById('fillInp');
+    if(inp) answers[currentQ].value = inp.value.trim();
+    startTimer();
+  }
+  if(q.type==='judge'){
+    const inp = document.getElementById('judgeFillInp');
+    if(inp) answers[currentQ].fillValue = inp.value.trim();
+    startTimer();
+  }
+  updateNavBtns();
+}
+window.setChoice = function(idx){
+  if(submitted) return; startTimer();
+  answers[currentQ] = { type:'choice', selected:idx };
+  renderQuestion(); updateNavBtns();
+};
+window.setJudge = function(val){
+  if(submitted) return; startTimer();
+  if(!answers[currentQ]) answers[currentQ] = { type:'judge' };
+  answers[currentQ].judgeSelected = val;
+  renderQuestion(); updateNavBtns();
+};
+function updateNavBtns(){
+  navBtns.style.display = 'flex';
+  document.getElementById('btnPrev').disabled = currentQ === 0;
+  document.getElementById('btnNext').style.display = currentQ<5?'':'none';
+  const allDone = questions.every((q,i)=>hasAnswer(i));
+  document.getElementById('btnSubmit').style.display = (currentQ===5||allDone)&&!submitted?'':'none';
+}
+window.prevQ = function(){ saveAnswer(); if(currentQ>0){ currentQ--; renderQuestion(); } };
+window.nextQ = function(){ saveAnswer(); if(currentQ<5){ currentQ++; renderQuestion(); } };
+function gradeQ(qi){
+  const q = questions[qi], a = answers[qi];
+  if(!a) return false;
+  if(q.type==='choice') return a.selected===q.correct;
+  if(q.type==='fill'){ const v = (a.value||'').toLowerCase().replace(/\s+/g,''); return q.accepts.includes(v); }
+  if(q.type==='judge'){
+    const jOk = a.judgeSelected===q.judgeCorrect;
+    const v = (a.fillValue||'').toLowerCase().replace(/\s+/g,'');
+    return jOk && q.accepts.includes(v);
+  }
+  return false;
+}
+
+window.submitAll = async function(){
+  saveAnswer();
+
+  // 验证学生信息
+  const stuName = document.getElementById('stuName').value.trim();
+  const stuClass = document.getElementById('stuClass').value.trim();
+  const stuId = document.getElementById('stuId').value.trim();
+  if (!stuName || !stuClass || !stuId) { alert('请先填写完整的姓名、班级和学号信息'); return; }
+
+  // 计算成绩
+  let correctN = 0;
+  questions.forEach((q,i)=>{ if(gradeQ(i)) correctN++; });
+  const totalScore = correctN * SCORE_PER_Q;
+  const maxScore = 60;
+
+  // 计算模块得分
+  let foundScore = 0, coreScore = 0;
+  questions.forEach((q, i) => {
+    const ok = gradeQ(i);
+    const score = ok ? SCORE_PER_Q : 0;
+    if (i < 3) foundScore += score;
+    else coreScore += score;
+  });
+
+  // 构建每题得分
+  const questionScores = {};
+  questions.forEach((q, i) => {
+    const ok = gradeQ(i);
+    questionScores[q.id] = ok ? SCORE_PER_Q : 0;
+  });
+
+  // 构建提交数据
+  const studentData = {
+    stuName, stuClass, stuId,
+    score: totalScore,
+    foundScore,
+    coreScore,
+    time: new Date().toISOString(),
+    questionScores,
+    usedTime: timerSec
+  };
+
+  // 显示加载并提交
+  document.getElementById('loadingOverlay').style.display = 'flex';
+  const submitResult = await submitDataToAPI(studentData);
+  document.getElementById('loadingOverlay').style.display = 'none';
+  if (!submitResult.success) {
+    alert(`⚠️ ${submitResult.message}`);
+  }
+
+  // 标记已提交，显示结果
+  submitted = true;
+  if(timerId){ clearInterval(timerId); timerId = null; }
+  navBtns.style.display = 'none';
+  showResults();
+};
+
+function showResults(){
+  document.getElementById('quizBody').innerHTML = '';
+  renderProgress();
+  let correctN = 0;
+  const dimScores = {};
+  dimNames.forEach(d=>{ dimScores[d] = {total:0,correct:0}; });
+  questions.forEach((q,i)=>{
+    const ok = gradeQ(i);
+    if(ok) correctN++;
+    dimScores[q.dim].total++;
+    if(ok) dimScores[q.dim].correct++;
+  });
+  const pct = Math.round(correctN/6*100);
+  const grade = pct>=80?'优秀':pct>=50?'良好':'需加强';
+  const gColor = pct>=80?'#27AE60':pct>=50?'#F39C12':'#E74C3C';
+  document.getElementById('resultTitle').innerHTML = '📊 学习分析报告 &nbsp; <span style="font-size:18px;color:'+gColor+'">'+(grade)+'（'+correctN+' / 6）</span>';
+  
+  const colors = ['#27AE60','#2E86AB','#8E44AD','#E67E22','#E74C3C','#2980B9'];
+  let dh = ''; const weakDims = [];
+  dimNames.forEach((d,i)=>{
+    const sc = dimScores[d]; if(sc.total===0) return;
+    const p = Math.round(sc.correct/sc.total*100);
+    dh += '<div class="dim-item"><span class="dim-label">'+d+'</span><div class="dim-bar-wrap"><div class="dim-bar" style="width:'+p+'%;background:'+colors[i]+'"></div></div><span class="dim-pct">'+p+'%</span></div>';
+    if(p<50) weakDims.push(d);
+  });
+  document.getElementById('dimList').innerHTML = dh;
+  const wb = document.getElementById('weakBox');
+  if(weakDims.length>0){ wb.innerHTML = '⚠ 需要加强：'+weakDims.join('、')+'。<br>建议回顾对应的知识点推导过程，加强专项练习。'; wb.className = 'weak-box show'; }
+  else{ wb.className = 'weak-box'; }
+
+  let rh = '<h4>📋 逐题解析</h4>';
+  questions.forEach((q,i)=>{
+    const ok = gradeQ(i), a = answers[i];
+    rh += '<div class="review-item '+(ok?'correct':'wrong')+'">';
+    rh += '<div class="ri-head"><span class="ri-icon">'+(ok?'✅':'❌')+'</span><span class="ri-title">Q'+(i+1)+'</span></div>';
+    if(q.type==='choice' && a){
+      const userChoice = q.choices[a.selected]||'未作答';
+      rh += '<div class="ri-answer">你的答案：<span class="'+(ok?'ri-correct':'ri-wrong')+'">'+userChoice+'</span></div>';
+    }
+    if(q.type==='fill' && a && a.value){
+      rh += '<div class="ri-answer">你的答案：<span class="'+(ok?'ri-correct':'ri-wrong')+'">'+a.value+'</span></div>';
+    }
+    if(q.type==='judge' && a){
+      const jText = a.judgeSelected!==undefined?(a.judgeSelected?'✓ 对':'✗ 错'):'未作答';
+      const jOk = a.judgeSelected===q.judgeCorrect;
+      rh += '<div class="ri-answer">判断：<span class="'+(jOk?'ri-correct':'ri-wrong')+'">'+jText+'</span></div>';
+      if(a.fillValue) rh += '<div class="ri-answer">填写面积：<span class="'+(ok?'ri-correct':'ri-wrong')+'">'+a.fillValue+'</span></div>';
+    }
+    if(!ok) rh += '<div class="ri-correct">正确答案：<b>'+(q.type==='choice'?q.choices[q.correct]:q.type==='judge'?('✗ 错，S='+q.answer):q.answer)+'</b></div>';
+    rh += '<div style="color:#555;margin-top:4px">'+q.explain+'</div>';
+    rh += '</div>';
+  });
+  document.getElementById('reviewWrap').innerHTML = rh;
+  document.getElementById('resultCard').classList.add('show');
+  if(correctN===6) showCelebration();
+}
+
+function showCelebration(){
+  const c = document.getElementById('celebration');
+  c.innerHTML='';
+  const colors=['#5C6BC0','#27AE60','#FFD93D','#AB47BC','#F39C12','#4ECDC4'];
+  for(let i=0;i<60;i++){
+    const el=document.createElement('div'); el.className='confetti '+(i%3===0?'circle':'');
+    el.style.left=Math.random()*100+'%'; el.style.top=-(Math.random()*60+10)+'px';
+    el.style.background=colors[Math.floor(Math.random()*colors.length)];
+    el.style.animationDelay=Math.random()*2+'s'; el.style.animationDuration=(Math.random()*1.5+2)+'s'; c.appendChild(el);
+  }
+  c.classList.add('show'); setTimeout(()=>{c.classList.remove('show');c.innerHTML='';},3000);
+}
+
+// 页面加载初始化
+window.addEventListener('load', () => {
+  const pending = JSON.parse(localStorage.getItem('pendingSubmissions_circle') || '[]');
+  if (pending.length > 0) {
+    console.log(`发现${pending.length}条未同步数据，后台自动尝试同步`);
+    setTimeout(resyncPendingData, 5000);
+  }
+});
+
+renderQuestion();
+})();
+</script>
+</body>
+</html>
