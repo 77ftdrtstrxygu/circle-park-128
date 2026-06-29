@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>圆的面积 · 课堂练习+闯关</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:linear-gradient(160deg,#e8f5e9,#e3f2fd,#fff8e1);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px}
+
+/* Tab bar */
+.tab-bar{display:flex;gap:4px;max-width:860px;width:100%;margin-bottom:0;position:relative;z-index:2}
+.tab-bar .tab{padding:14px 28px;border:none;border-radius:16px 16px 0 0;font-size:16px;font-weight:bold;cursor:pointer;transition:all 0.3s;font-family:inherit;background:#e0e0e0;color:#888}
+.tab-bar .tab.active{background:#fff;color:#43A047}
+.tab-bar .tab:nth-child(2).active{color:#FF6B6B}
+
+/* Sections */
+.section{display:none;width:100%}
+.section.active{display:block}
+
+/* ── Quiz Section ── */
+#quizSection{max-width:860px}
+#quizSection .qz-container{width:100%;max-width:620px;margin:0 auto;position:relative;z-index:1}
+#quizSection .qz-header{background:linear-gradient(135deg,#388E3C,#43A047,#66BB6A);color:#fff;padding:22px 28px;text-align:center;border-radius:22px 22px 0 0;box-shadow:0 4px 20px rgba(67,160,71,0.25)}
+#quizSection .qz-header h1{font-size:25px;letter-spacing:1px;text-shadow:0 1px 3px rgba(0,0,0,0.12)}
+#quizSection .qz-header .sub{font-size:13px;opacity:0.8;margin-top:5px}
+.progress-wrap{background:#fff;padding:20px 32px 10px;display:flex;align-items:center;justify-content:center;gap:0}
+.step-item{display:flex;align-items:center}
+.step-circle{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:bold;background:#e8e8e8;color:#999;transition:all 0.45s;position:relative;z-index:1}
+.step-circle.done.correct{background:#27AE60;color:#fff;box-shadow:0 0 0 6px rgba(39,174,96,0.12)}
+.step-circle.done.wrong{background:#E74C3C;color:#fff;box-shadow:0 0 0 6px rgba(231,76,60,0.12)}
+.step-circle.current{background:#43A047;color:#fff;box-shadow:0 0 0 10px rgba(67,160,71,0.15);animation:stepPulse 1.5s infinite}
+@keyframes stepPulse{0%,100%{box-shadow:0 0 0 6px rgba(67,160,71,0.15)}50%{box-shadow:0 0 0 18px rgba(67,160,71,0.05)}}
+.step-line{width:48px;height:3px;background:#e0e0e0;transition:background 0.5s}
+.step-line.done{background:#27AE60}
+.stats-pill{background:#fff;padding:8px 32px 14px;display:flex;justify-content:center;gap:18px}
+.stats-pill span{font-size:13px;font-weight:bold;padding:4px 14px;border-radius:20px}
+.stats-pill .green{background:#e8f5e9;color:#2E7D32}
+.stats-pill .red{background:#fdeaea;color:#C62828}
+.qz-body{background:#fff;padding:0 28px 28px;border-radius:0 0 22px 22px;box-shadow:0 4px 20px rgba(0,0,0,0.06)}
+.question-wrap{display:none;animation:qIn 0.45s ease-out}
+.question-wrap.active{display:block}
+@keyframes qIn{0%{opacity:0;transform:translateX(30px)}100%{opacity:1;transform:translateX(0)}}
+.q-badge{display:inline-block;padding:4px 14px;border-radius:14px;font-size:12px;font-weight:bold;margin-bottom:14px}
+.q-badge.bg-pizza{background:#FFF3E0;color:#E65100}
+.q-badge.bg-flower{background:#FCE4EC;color:#C62828}
+.q-content{display:flex;align-items:flex-start;gap:14px;margin-bottom:20px}
+.q-icon{width:60px;height:60px;min-width:60px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:34px}
+.q-icon.bg-pizza{background:linear-gradient(135deg,#FFF3E0,#FFE0B2)}
+.q-icon.bg-flower{background:linear-gradient(135deg,#FCE4EC,#F8BBD0)}
+.q-text{font-size:16px;color:#333;line-height:1.7;flex:1}
+.q-text b{color:#43A047}
+.qz-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+@media(max-width:500px){.qz-options{grid-template-columns:1fr}}
+.qz-opt-btn{display:flex;align-items:center;gap:10px;padding:14px 16px;border:2px solid #e8e8e8;border-radius:14px;background:#fff;cursor:pointer;transition:all 0.25s;font-family:inherit;text-align:left;box-shadow:0 2px 8px rgba(0,0,0,0.04)}
+.qz-opt-btn:hover{border-color:#43A047;background:#f8fef8;transform:translateY(-2px);box-shadow:0 6px 18px rgba(67,160,71,0.1)}
+.opt-letter{width:32px;height:32px;min-width:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:bold;background:#f5f5f5;color:#999;transition:all 0.3s}
+.qz-opt-btn:hover .opt-letter{background:#e8f5e9;color:#43A047}
+.opt-label{font-size:14px;color:#444;line-height:1.4}
+.qz-opt-btn.correct-reveal{border-color:#27AE60;background:#e8f8ef}.qz-opt-btn.correct-reveal .opt-letter{background:#27AE60;color:#fff}
+.qz-opt-btn.wrong-reveal{border-color:#E74C3C;background:#fef0f0;animation:qzShake 0.5s}.qz-opt-btn.wrong-reveal .opt-letter{background:#E74C3C;color:#fff}
+.qz-opt-btn:disabled{pointer-events:none;opacity:0.65}
+@keyframes qzShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.fb-box{display:none;border-radius:14px;padding:16px 18px;margin-bottom:14px;animation:fbIn 0.4s}
+.fb-box.show{display:flex;gap:12px;align-items:flex-start}
+.fb-box.correct{background:#e8f5e9;border-left:4px solid #27AE60}
+.fb-box.wrong{background:#fef0f0;border-left:4px solid #E74C3C}
+.fb-icon{font-size:28px;min-width:32px;text-align:center}
+.fb-text{font-size:14px;line-height:1.7;color:#555}
+.fb-text b{color:#27AE60}
+.fb-box.wrong .fb-text b{color:#E74C3C}
+@keyframes fbIn{0%{opacity:0;max-height:0}100%{opacity:1;max-height:200px}}
+.qz-btn-next{padding:12px 36px;border:none;border-radius:14px;background:linear-gradient(135deg,#43A047,#66BB6A);color:#fff;font-size:16px;font-weight:bold;cursor:pointer;display:none;margin:0 auto;font-family:inherit;transition:all 0.3s;box-shadow:0 4px 14px rgba(67,160,71,0.25)}
+.qz-btn-next.show{display:block}
+.qz-btn-next:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(67,160,71,0.35)}
+.result-wrap{display:none;animation:rIn 0.55s ease-out}
+.result-wrap.show{display:block}
+@keyframes rIn{0%{opacity:0;transform:scale(0.88) translateY(16px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+.r-icon{font-size:76px;text-align:center;margin-bottom:14px}
+.r-title{font-size:22px;color:#333;font-weight:bold;text-align:center;margin-bottom:10px;line-height:1.5}
+.r-detail{font-size:15px;color:#666;text-align:center;margin-bottom:22px;line-height:1.6}
+.r-score-ring{text-align:center;margin-bottom:18px}
+.r-score-ring .big-num{font-size:48px;font-weight:bold;display:inline-block;padding:10px 30px;border-radius:20px}
+.r-score-ring .big-num.green{background:#e8f5e9;color:#27AE60}
+.r-score-ring .big-num.orange{background:#fff8e1;color:#F39C12}
+.r-score-ring .big-num.red{background:#fdeaea;color:#E74C3C}
+.r-score-ring .of{font-size:18px;color:#999}
+.review-wrap{text-align:left;margin:12px 0 20px}
+.review-wrap h4{color:#666;margin-bottom:10px;font-size:15px}
+.review-card{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;margin:6px 0;border-radius:12px;font-size:14px;line-height:1.5}
+.review-card.correct{background:#f5fef5;border:1px solid #d5f0d5}
+.review-card.wrong{background:#fefaf5;border:1px solid #ffe0c0}
+.review-card .r-status{font-size:18px;min-width:22px;text-align:center}
+.review-card .r-content{flex:1}
+.review-card .r-answer{color:#27AE60;font-weight:bold;margin-top:4px}
+.qz-btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn-act{padding:13px 32px;border:none;border-radius:14px;font-size:16px;font-weight:bold;cursor:pointer;font-family:inherit;transition:all 0.3s}
+.btn-act.green{background:linear-gradient(135deg,#43A047,#66BB6A);color:#fff;box-shadow:0 4px 16px rgba(67,160,71,0.25)}
+.btn-act.green:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(67,160,71,0.35)}
+.btn-act.gold{background:linear-gradient(135deg,#F9A825,#FFD54F,#F9A825);color:#5D4037;box-shadow:0 4px 16px rgba(249,168,37,0.3);animation:goldGlow 2s ease-in-out infinite}
+.btn-act.gold:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(249,168,37,0.45)}
+@keyframes goldGlow{0%,100%{box-shadow:0 4px 16px rgba(249,168,37,0.3)}50%{box-shadow:0 4px 28px rgba(249,168,37,0.5)}}
+.btn-act.white{background:#fff;color:#43A047;border:2px solid #43A047}
+.btn-act.white:hover{background:#f1f8e9}
+.btn-act.orange{background:#FFF8E1;color:#E65100;border:2px solid #FFA726}
+.btn-act.orange:hover{background:#FFE0B2}
+@keyframes starBounce{0%{opacity:0;transform:scale(0.3)}60%{transform:scale(1.2)}100%{opacity:1;transform:scale(1)}}
+.stars-row{text-align:center;margin:12px 0;font-size:44px;letter-spacing:4px}
+.stars-row span{display:inline-block;opacity:0;animation:starBounce 0.5s ease-out forwards}
+.qz-celebration-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:99}
+.qz-celebration-overlay.show{display:block}
+.qz-confetti{position:absolute;width:12px;height:12px;border-radius:3px;animation:qzcf 2.8s ease-out forwards}
+.qz-confetti.circle{border-radius:50%}
+.qz-confetti.star{clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
+@keyframes qzcf{0%{transform:translateY(-80px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(900deg);opacity:0}}
+
+/* ── Challenge Section ── */
+#challengeSection{max-width:870px}
+.ch-container{width:100%;background:#fff;border-radius:20px;box-shadow:0 8px 40px rgba(0,0,0,0.1);overflow:hidden}
+.ch-header{background:linear-gradient(135deg,#FF6B6B,#FF8E53);color:#fff;padding:18px 28px;text-align:center}
+.ch-header h1{font-size:28px;letter-spacing:2px}
+.stage-bar{display:flex;justify-content:center;gap:6px;padding:16px 20px 8px;background:#fafafa}
+.stage-dot{display:flex;align-items:center;gap:6px}
+.stage-num{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:15px;border:3px solid #ddd;color:#aaa;background:#fff;transition:all 0.4s}
+.stage-num.active{border-color:#FF6B6B;color:#FF6B6B;background:#fff5f5}
+.stage-num.done{border-color:#27AE60;color:#27AE60;background:#f0fff5}
+.stage-label{font-size:13px;color:#999;min-width:36px;text-align:center}
+.stage-label.active{color:#FF6B6B;font-weight:bold}
+.stage-line{width:32px;height:3px;background:#ddd;border-radius:2px;margin-top:-8px}
+.stage-line.done{background:#27AE60}
+.ch-canvas-wrap{position:relative;background:#fff;display:flex;justify-content:center;padding:8px 16px}
+.ch-canvas-wrap canvas{max-width:100%;height:auto;border-radius:12px;background:#fffef9}
+.ctrl-panel{padding:12px 28px 20px;min-height:140px}
+.slider-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.slider-row label{font-size:15px;font-weight:bold;color:#444}
+.slider-row input[type=range]{flex:1;min-width:160px;accent-color:#FF6B6B}
+.slider-row .val{font-size:18px;font-weight:bold;color:#FF6B6B;min-width:32px}
+.ch-btn-row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.ch-btn{padding:10px 22px;border:none;border-radius:10px;font-size:15px;font-weight:bold;cursor:pointer;transition:all 0.2s;font-family:inherit}
+.ch-btn-primary{background:#FF6B6B;color:#fff}.ch-btn-primary:hover{background:#e55a5a;transform:translateY(-1px)}
+.ch-btn-outline{background:#fff;color:#FF6B6B;border:2px solid #FF6B6B}.ch-btn-outline:hover{background:#fff5f5}
+.ch-btn-success{background:#27AE60;color:#fff}.ch-btn-success:hover{background:#219a52}
+.ch-btn:disabled{opacity:0.5;cursor:not-allowed;pointer-events:none}
+.question-card{background:#fffef5;border:2px solid #ffe0b2;border-radius:14px;padding:18px 22px;margin-top:4px}
+.question-card h3{font-size:17px;color:#333;margin-bottom:14px}
+.ch-option-list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ch-option-btn{padding:14px;border:2px solid #e0e0e0;border-radius:10px;background:#fff;cursor:pointer;font-size:15px;text-align:center;transition:all 0.2s;font-family:inherit}
+.ch-option-btn:hover{border-color:#FF6B6B;background:#fff5f5}
+.ch-option-btn.correct{border-color:#27AE60;background:#e8f8ef;color:#27AE60}
+.ch-option-btn.wrong{border-color:#E74C3C;background:#fdeaea;color:#E74C3C;animation:chShake 0.5s}
+.ch-feedback{margin-top:12px;padding:10px 16px;border-radius:8px;font-size:15px;font-weight:bold;display:none}
+.ch-feedback.show{display:block}
+.ch-feedback.success{background:#e8f8ef;color:#27AE60}
+.ch-feedback.error{background:#fdeaea;color:#E74C3C}
+.puzzle-area{position:relative;margin-top:8px}
+.puzzle-drops{display:flex;gap:10px;justify-content:center;margin-bottom:14px}
+.puzzle-slot{width:64px;height:64px;border:3px dashed #ccc;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#333;background:#fafafa;transition:all 0.3s}
+.puzzle-slot.filled{border-style:solid;border-color:#FF6B6B;background:#fff5f5}
+.puzzle-slot.correct-slot{border-color:#27AE60;background:#e8f8ef}
+.puzzle-pieces{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.puzzle-piece{width:60px;height:60px;border-radius:10px;background:linear-gradient(135deg,#FF8E53,#FF6B6B);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:bold;cursor:grab;user-select:none;transition:all 0.2s;box-shadow:0 3px 10px rgba(255,107,107,0.3)}
+.puzzle-piece:active{cursor:grabbing;transform:scale(1.1)}
+.puzzle-piece.dragging{opacity:0.5;z-index:999}
+.puzzle-piece.placed{opacity:0.4;pointer-events:none}
+.ch-celebration{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:100}
+.ch-confetti{position:absolute;width:10px;height:10px;border-radius:2px;animation:chFall 2s ease-out forwards}
+@keyframes chFall{0%{transform:translateY(-60px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+@keyframes chShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.ch-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:12px 28px;border-radius:30px;font-size:16px;font-weight:bold;z-index:100;animation:chToastIn 0.4s ease-out;display:none}
+.ch-toast.success{background:#27AE60;color:#fff}
+.ch-toast.error{background:#E74C3C;color:#fff}
+@keyframes chToastIn{0%{opacity:0;transform:translateX(-50%) translateY(-20px)}100%{opacity:1;transform:translateX(-50%) translateY(0)}}
+.ch-hint-text{font-size:14px;color:#888;margin-top:8px;text-align:center}
+</style>
+</head>
+<body>
+<div class="tab-bar">
+  <button class="tab active" onclick="switchTab('quiz')">📝 课堂练习</button>
+  <button class="tab" onclick="switchTab('challenge')">🏆 闯关练习</button>
+</div>
+
+<!-- ====== Quiz Section ====== -->
+<div class="section active" id="quizSection">
+  <div class="qz-container">
+    <div class="qz-header"><h1>📐 圆的面积 · 课堂练习</h1><div class="sub">共 2 题 · 生活情景应用</div></div>
+    <div class="progress-wrap" id="qzProgressWrap"></div>
+    <div class="stats-pill"><span class="green" id="qzCorrect">✅ 0</span><span class="red" id="qzWrong">❌ 0</span></div>
+    <div class="qz-body"><div id="qzQuizArea"></div><div class="result-wrap" id="qzResultWrap"></div></div>
+  </div>
+  <div class="qz-celebration-overlay" id="qzCelebration"></div>
+</div>
+
+<!-- ====== Challenge Section ====== -->
+<div class="section" id="challengeSection">
+  <div class="ch-container">
+    <div class="ch-header"><h1>🏆 圆的面积大闯关</h1></div>
+    <div class="stage-bar" id="chStageBar">
+      <div class="stage-dot"><span class="stage-num active" id="chS1">1</span><span class="stage-label active">观察</span></div>
+      <div class="stage-line" id="chL1"></div>
+      <div class="stage-dot"><span class="stage-num" id="chS2">2</span><span class="stage-label">思考</span></div>
+      <div class="stage-line" id="chL2"></div>
+      <div class="stage-dot"><span class="stage-num" id="chS3">3</span><span class="stage-label">总结</span></div>
+    </div>
+    <div class="ch-canvas-wrap"><canvas id="chCanvas" width="800" height="480"></canvas></div>
+    <div class="ctrl-panel" id="chCtrlPanel"></div>
+  </div>
+  <div class="ch-celebration" id="chCelebration"></div>
+  <div class="ch-toast" id="chToast"></div>
+</div>
+
+<script>
+// ==================== TAB SWITCHING ====================
+(function(){
+const tabs = document.querySelectorAll('.tab-bar .tab');
+const sections = { quiz: document.getElementById('quizSection'), challenge: document.getElementById('challengeSection') };
+
+window.switchTab = function(name){
+  tabs.forEach(t=>t.classList.remove('active'));
+  tabs.forEach(t=>{ if(t.textContent.includes(name==='quiz'?'课堂':'闯关')) t.classList.add('active'); });
+  Object.entries(sections).forEach(([k,v])=>v.classList.toggle('active',k===name));
+  if(name==='challenge'){ initChallengeCanvas(); }
+};
+
+// Expose for quiz results to call
+window.goToChallengeTab = function(){ switchTab('challenge'); };
+window.goToPark2 = function(){ window.location.href='park2.html'; };
+})();
+
+// ==================== QUIZ LOGIC ====================
+(function(){
+const quizArea = document.getElementById('qzQuizArea');
+const resultWrap = document.getElementById('qzResultWrap');
+const bgClasses = ['bg-pizza','bg-flower'];
+const questions = [
+  { scene:'🍕', title:'小明点了一个 <b>12寸</b> 的圆形披萨。披萨的"寸"指的是直径，那这个披萨的面积大约是多少平方寸？（π≈3.14）',
+    options:['3.14 × 12 ≈ 37.68 平方寸','3.14 × 6² ≈ 113.04 平方寸','3.14 × 12² ÷ 4 ≈ 113.04 平方寸','3.14 × 3² ≈ 28.26 平方寸'], correct:1,
+    explain:'披萨直径 = 12寸 → 半径 r = 6寸。<br>圆的面积 S = π × r² = 3.14 × 6² = 3.14 × 36 = <b>113.04 平方寸</b>。<br>选项B正确。选项A误用直径计算；选项D半径取成了3。' },
+  { scene:'🌸', title:'学校要建一个半径为 <b>3米</b> 的圆形花坛。园艺工人需要购买多少平方米的营养土来铺满它？（π≈3.14）',
+    options:['3.14 × 6² ≈ 113.04 平方米','3.14 × 3 ≈ 9.42 平方米','3.14 × 3² ≈ 28.26 平方米','2 × 3.14 × 3² ≈ 56.52 平方米'], correct:2,
+    explain:'半径 r = 3米。<br>圆的面积 S = π × r² = 3.14 × 3² = 3.14 × 9 = <b>28.26 平方米</b>。<br>选项C正确。选项A误用直径；选项B误算πr；选项D多乘了2。' }
+];
+let currentQ=0,answers=[],quizDone=false;
+const letters='ABCD';
+
+function renderProgress(){
+  let h='';
+  for(let i=0;i<2;i++){
+    let cls='step-circle';
+    if(i<answers.length)cls+=answers[i].correct?' done correct':' done wrong';
+    else if(i===currentQ)cls+=' current';
+    h+='<div class="step-item"><div class="'+cls+'">'+(i+1)+'</div></div>';
+    if(i<1){const lc=i<answers.length?' done':'';h+='<div class="step-line'+lc+'"></div>';}
+  }
+  document.getElementById('qzProgressWrap').innerHTML=h;
+}
+
+function renderQuestion(){
+  renderProgress();
+  const cn=answers.filter(a=>a.correct).length,wn=answers.length-cn;
+  document.getElementById('qzCorrect').textContent='✅ '+cn;
+  document.getElementById('qzWrong').textContent='❌ '+wn;
+  const q=questions[currentQ],bg=bgClasses[currentQ];
+  let h='<div class="question-wrap active">';
+  h+='<div class="q-badge '+bg+'">第 '+(currentQ+1)+' / 2 题</div>';
+  h+='<div class="q-content"><div class="q-icon '+bg+'">'+q.scene+'</div><div class="q-text">'+q.title+'</div></div>';
+  h+='<div class="qz-options">';
+  q.options.forEach((opt,i)=>{h+='<button class="qz-opt-btn" onclick="qzSelect('+i+',this)"><span class="opt-letter">'+letters[i]+'</span><span class="opt-label">'+opt+'</span></button>';});
+  h+='</div><div class="fb-box" id="qzFb"><div class="fb-icon" id="qzFbIcon"></div><div class="fb-text" id="qzFbText"></div></div>';
+  h+='<button class="qz-btn-next" id="qzBtnNext" onclick="qzNext()">下一题 ▶</button></div>';
+  quizArea.innerHTML=h;
+}
+
+window.qzSelect = function(idx,btn){
+  if(quizDone)return;
+  const q=questions[currentQ],correct=idx===q.correct;
+  const allBtns=document.querySelectorAll('.qz-opt-btn');
+  allBtns.forEach(b=>b.disabled=true);
+  allBtns.forEach((b,i)=>{if(i===q.correct)b.classList.add('correct-reveal');else if(i===idx)b.classList.add('wrong-reveal');});
+  document.getElementById('qzFbIcon').textContent=correct?'✅':'❌';
+  const fb=document.getElementById('qzFb');fb.className='fb-box show '+(correct?'correct':'wrong');
+  document.getElementById('qzFbText').innerHTML=(correct?'<b>回答正确！</b><br>':'<b>回答错误。</b><br>')+q.explain;
+  const nb=document.getElementById('qzBtnNext');nb.classList.add('show');
+  nb.textContent=currentQ<1?'下一题 ▶':'查看结果 📊';
+  answers[currentQ]={selected:idx,correct};
+  renderProgress();
+  const cn=answers.filter(a=>a.correct).length;
+  document.getElementById('qzCorrect').textContent='✅ '+cn;
+  document.getElementById('qzWrong').textContent='❌ '+(answers.length-cn);
+};
+
+window.qzNext = function(){ if(currentQ<1){currentQ++;renderQuestion();}else showResults(); };
+
+function showResults(){
+  quizDone=true;quizArea.innerHTML='';
+  const cn=answers.filter(a=>a.correct).length,wn=2-cn;
+  renderProgress();
+  document.getElementById('qzCorrect').textContent='✅ '+cn;
+  document.getElementById('qzWrong').textContent='❌ '+wn;
+  let h='';
+  if(cn===2){
+    showQzCelebration();
+    h+='<div class="r-icon">🎉</div><div class="r-title">太棒了！</div>';
+    h+='<div class="r-score-ring"><span class="big-num green">2 / 2</span></div>';
+    h+='<div class="r-detail">你已经掌握了圆的面积<span style="color:#27AE60;font-weight:bold">基础知识</span>，<br>我们开始闯关吧！</div>';
+    h+='<div class="stars-row" id="qzStars"><span>⭐</span><span>⭐</span><span>⭐</span></div>';
+    h+='<div class="qz-btn-row" style="margin-top:20px"><button class="btn-act gold" onclick="goToPark2()">🏆 开始闯关</button></div>';
+  }else if(wn===1){
+    h+='<div class="r-icon">📖</div><div class="r-title">没关系，我们先快速回顾一下相关知识</div>';
+    h+='<div class="r-score-ring"><span class="big-num orange">'+cn+'</span><span class="of"> / 2</span></div>';
+    h+='<div class="review-wrap"><h4>📝 解题回顾</h4>';
+    questions.forEach((q,i)=>{const a=answers[i];h+='<div class="review-card '+(a.correct?'correct':'wrong')+'"><div class="r-status">'+(a.correct?'✅':'❌')+'</div><div class="r-content"><div>'+q.scene+' '+q.title.replace(/<[^>]*>/g,'')+'</div><div class="r-answer">正确答案：'+q.options[q.correct]+'</div></div></div>';});
+    h+='</div><div class="qz-btn-row"><button class="btn-act green" onclick="qzRestart()">🔄 重新练习</button><button class="btn-act white" onclick="goToChallengeTab()">🏆 去闯关练习</button></div>';
+  }else{
+    h+='<div class="r-icon">📚</div><div class="r-title">别着急，我们先补一补基础</div>';
+    h+='<div class="r-score-ring"><span class="big-num red">'+cn+'</span><span class="of"> / 2</span></div>';
+    h+='<div class="review-wrap"><h4>💡 核心知识回顾</h4>';
+    h+='<div class="review-card correct"><div class="r-status">📌</div><div class="r-content"><b>圆的面积公式：</b>S=π×r²，其中r是半径，π≈3.14</div></div>';
+    h+='<div class="review-card wrong"><div class="r-status">⚠️</div><div class="r-content"><b>常见错误：</b>用直径代替半径、忘记平方、计算失误</div></div>';
+    h+='<div class="review-card"><div class="r-status">💡</div><div class="r-content"><b>小口诀：</b>面积算圆不用慌，半径平方乘π上！</div></div></div>';
+    h+='<div class="qz-btn-row"><button class="btn-act green" onclick="qzRestart()">🔄 再试一次</button><button class="btn-act orange" onclick="goToChallengeTab()">🏆 去闯关练习</button></div>';
+  }
+  resultWrap.innerHTML=h;resultWrap.classList.add('show');
+  if(cn===2)setTimeout(()=>{document.querySelectorAll('#qzStars span').forEach((s,i)=>s.style.animationDelay=(i*0.2)+'s');},100);
+}
+
+window.qzRestart = function(){currentQ=0;answers=[];quizDone=false;resultWrap.classList.remove('show');resultWrap.innerHTML='';document.getElementById('qzCorrect').textContent='✅ 0';document.getElementById('qzWrong').textContent='❌ 0';renderQuestion();};
+
+function showQzCelebration(){
+  const c=document.getElementById('qzCelebration');c.innerHTML='';
+  const colors=['#43A047','#27AE60','#FFD93D','#66BB6A','#F9A825','#A29BFE','#4ECDC4','#FF8E53'];
+  const shapes=['qz-confetti','qz-confetti circle','qz-confetti star'];
+  for(let i=0;i<80;i++){const el=document.createElement('div');el.className=shapes[Math.floor(Math.random()*3)];el.style.left=Math.random()*100+'%';el.style.top=-(Math.random()*60+10)+'px';el.style.background=colors[Math.floor(Math.random()*colors.length)];el.style.animationDelay=Math.random()*2.5+'s';el.style.animationDuration=(Math.random()*1.8+2)+'s';c.appendChild(el);}
+  c.classList.add('show');setTimeout(()=>{c.classList.remove('show');c.innerHTML='';},3300);
+}
+renderQuestion();
+})();
+
+// ==================== CHALLENGE LOGIC ====================
+(function(){
+const canvas = document.getElementById('chCanvas');
+const ctx = canvas.getContext('2d');
+const W=800,H=480,CX=380,CY=240,R=155;
+let stage=0,numSectors=16,animT=0,animating=false,animStart=0,animDuration=1200;
+let stage2Done=false,stage4Done=false;
+let puzzlePieces=[],dragPiece=null,dragOffX=0,dragOffY=0,dragging=false;
+let autoDemoRunning=false,autoDemoStep=0,autoDemoTimeout=null;
+
+function computeSectorData(n,tO){
+  const t=tO!==undefined?tO:animT,data=[],angleStep=2*Math.PI/n,totalW=Math.PI*R,secW=totalW/(n/2),rl=CX-totalW/2,hh=R/2;
+  for(let i=0;i<n;i++){
+    const sa=i*angleStep-Math.PI/2,ea=(i+1)*angleStep-Math.PI/2,ma=(sa+ea)/2,isEven=i%2===0;
+    let rx=isEven?rl+(i/2+0.5)*secW:rl+((i-1)/2+1)*secW;
+    const cAp={x:CX,y:CY},cL={x:CX+R*Math.cos(sa),y:CY+R*Math.sin(sa)},cR={x:CX+R*Math.cos(ea),y:CY+R*Math.sin(ea)},cCt={x:CX+R*Math.cos(ma),y:CY+R*Math.sin(ma)};
+    let rAp,rL,rR,rCt;
+    if(isEven){rAp={x:rx,y:CY-hh};rL={x:rx-secW/2,y:CY+hh};rR={x:rx+secW/2,y:CY+hh};rCt={x:rx,y:CY+hh+8};}
+    else{rAp={x:rx,y:CY+hh};rL={x:rx-secW/2,y:CY-hh};rR={x:rx+secW/2,y:CY-hh};rCt={x:rx,y:CY-hh-8};}
+    const ease=t<0.5?2*t*t:-1+(4-2*t)*t;
+    function lp(a,b){return{x:a.x+(b.x-a.x)*ease,y:a.y+(b.y-a.y)*ease};}
+    data.push({apex:lp(cAp,rAp),left:lp(cL,rL),right:lp(cR,rR),ctrl:lp(cCt,rCt),color:isEven?'#FF6B6B':'#4ECDC4'});
+  }
+  return data;
+}
+
+function draw(tO){
+  ctx.clearRect(0,0,W,H);
+  if(stage===0||stage===1){
+    computeSectorData(numSectors,tO).forEach(s=>{ctx.beginPath();ctx.moveTo(s.apex.x,s.apex.y);ctx.lineTo(s.left.x,s.left.y);ctx.quadraticCurveTo(s.ctrl.x,s.ctrl.y,s.right.x,s.right.y);ctx.closePath();ctx.fillStyle=s.color;ctx.fill();ctx.strokeStyle='rgba(0,0,0,0.15)';ctx.lineWidth=1;ctx.stroke();});
+    if(animT>0.05){const tw=Math.PI*R,rl=CX-tw/2,rt=CY-R/2;ctx.setLineDash([6,4]);ctx.strokeStyle='rgba(0,0,0,0.4)';ctx.lineWidth=2.5;ctx.strokeRect(rl,rt,tw,R);ctx.setLineDash([]);if(tO!==undefined||animT>0.9){ctx.fillStyle='rgba(0,0,0,0.7)';ctx.font='bold 17px "Microsoft YaHei"';ctx.textAlign='center';ctx.fillText('长 = πr (周长的一半)',CX,rt-18);ctx.fillText('宽 = r (半径)',rl-70,CY);}}
+    ctx.fillStyle='#666';ctx.font='15px "Microsoft YaHei"';ctx.textAlign='left';ctx.fillText('当前扇形数: '+numSectors,20,30);ctx.fillText(animT>0.99?'拼接完成 ✓':animT>0.01?'拼接中...':'点击"拼接"查看效果',20,54);
+  }
+  if(stage===2){
+    computeSectorData(numSectors,1).forEach(s=>{ctx.beginPath();ctx.moveTo(s.apex.x,s.apex.y);ctx.lineTo(s.left.x,s.left.y);ctx.quadraticCurveTo(s.ctrl.x,s.ctrl.y,s.right.x,s.right.y);ctx.closePath();ctx.fillStyle=s.color.replace('FF6B6B','ff9999').replace('4ECDC4','99dddd');ctx.fill();});
+    const tw=Math.PI*R;ctx.setLineDash([6,4]);ctx.strokeStyle='rgba(0,0,0,0.6)';ctx.lineWidth=3;ctx.strokeRect(CX-tw/2,CY-R/2,tw,R);ctx.setLineDash([]);
+    ctx.fillStyle='#333';ctx.font='bold 18px "Microsoft YaHei"';ctx.textAlign='center';ctx.fillText('请用下方的卡片拼出面积公式',CX,50);
+    if(stage4Done){ctx.fillStyle='#27AE60';ctx.font='bold 26px "Microsoft YaHei"';ctx.fillText('S = π r²',CX,CY);ctx.fillStyle='#FF6B6B';ctx.font='bold 16px "Microsoft YaHei"';ctx.fillText('圆的面积 = π × 半径 × 半径',CX,CY+40);}
+  }
+}
+
+function updateCtrlPanel(){
+  const p=document.getElementById('chCtrlPanel');let h='';
+  if(stage===0){h+='<div class="slider-row"><label>扇形数量</label><input type="range" id="sectorSlider" min="4" max="64" step="2" value="'+numSectors+'"><span class="val" id="sectorVal">'+numSectors+'</span></div>';h+='<div class="ch-btn-row"><button class="ch-btn ch-btn-primary" id="btnSplice">拼接</button><button class="ch-btn ch-btn-outline" id="btnReset">重置</button><button class="ch-btn ch-btn-outline" id="btnAutoDemo">自动演示</button><button class="ch-btn ch-btn-success" id="btnNext1" disabled>下一关 ▶</button></div>';h+='<p class="ch-hint-text">拖动滑块改变扇形数量，点击"拼接"观察效果。</p>';}
+  else if(stage===1){h+='<div class="question-card"><h3>🤔 思考：如果把圆平均分成更多份，拼接后的形状会怎样变化？</h3><div class="ch-option-list"><button class="ch-option-btn" data-opt="0">A. 越来越接近长方形</button><button class="ch-option-btn" data-opt="1">B. 越来越接近三角形</button><button class="ch-option-btn" data-opt="2">C. 没有明显变化</button><button class="ch-option-btn" data-opt="3">D. 会变成正方形</button></div><div class="ch-feedback" id="fb2"></div><div class="ch-btn-row" style="margin-top:10px"><button class="ch-btn ch-btn-outline" id="btnShowDemo">再看一遍</button></div></div>';}
+  else if(stage===2){h+='<div class="puzzle-area"><p style="text-align:center;font-size:15px;color:#555;margin-bottom:10px;">🧩 拖动下方卡片到框中，拼出圆的面积公式</p>';h+='<div class="puzzle-drops" id="puzzleDrops"><div class="puzzle-slot" data-slot="0"></div><div class="puzzle-slot" data-slot="1"></div><div class="puzzle-slot" data-slot="2"></div></div><div class="puzzle-pieces" id="puzzlePieces"></div>';h+='<div class="ch-btn-row"><button class="ch-btn ch-btn-primary" id="btnCheckPuzzle">检查答案</button><button class="ch-btn ch-btn-outline" id="btnResetPuzzle">重新排列</button></div>';if(stage4Done)h+='<div class="ch-btn-row"><button class="ch-btn ch-btn-success" style="font-size:16px;padding:12px 30px" onclick="location.href=\'park2.html\'">🎡 进入圆形游乐园</button></div>';h+='</div>';}
+  p.innerHTML=h;bindStageEvents();
+}
+
+function bindStageEvents(){
+  if(stage===0){
+    document.getElementById('sectorSlider').addEventListener('input',()=>{numSectors=parseInt(document.getElementById('sectorSlider').value);document.getElementById('sectorVal').textContent=numSectors;animT=0;animating=false;draw();});
+    document.getElementById('btnSplice').addEventListener('click',()=>{if(animating)return;animating=true;animStart=performance.now();function l(ts){animT=Math.min((ts-animStart)/animDuration,1);draw();if(animT<1)requestAnimationFrame(l);else{animating=false;updateCtrlPanel();const b=document.getElementById('btnNext1');if(b)b.disabled=false;}}requestAnimationFrame(l);});
+    document.getElementById('btnReset').addEventListener('click',()=>{animT=0;animating=false;stopAutoDemo();draw();});
+    document.getElementById('btnAutoDemo').addEventListener('click',function(){stopAutoDemo();autoDemoRunning=true;autoDemoStep=0;const st=[4,8,16,32,64];function rs(){if(!autoDemoRunning)return;if(autoDemoStep>=st.length){autoDemoRunning=false;const b=document.getElementById('btnNext1');if(b)b.disabled=false;updateCtrlPanel();return;}numSectors=st[autoDemoStep];animT=0;const sl=document.getElementById('sectorSlider'),sv=document.getElementById('sectorVal');if(sl)sl.value=numSectors;if(sv)sv.textContent=numSectors;draw();setTimeout(()=>{if(!autoDemoRunning)return;animating=true;animStart=performance.now();function l(ts){if(!autoDemoRunning){animating=false;return;}animT=Math.min((ts-animStart)/1000,1);draw();if(animT<1)requestAnimationFrame(l);else{animating=false;const b=document.getElementById('btnNext1');if(b)b.disabled=false;setTimeout(()=>{autoDemoStep++;rs();},800);}}requestAnimationFrame(l);},400);}rs();});
+    const nb=document.getElementById('btnNext1');nb.addEventListener('click',()=>{if(stage<2)goToStage(stage+1);});nb.disabled=animT<0.1;
+  }
+  if(stage===1){document.querySelectorAll('.ch-option-btn').forEach(b=>{b.addEventListener('click',function(){if(stage2Done)return;const o=parseInt(this.dataset.opt),fb=document.getElementById('fb2');document.querySelectorAll('.ch-option-btn').forEach(bb=>bb.className='ch-option-btn');if(o===0){this.classList.add('correct');fb.className='ch-feedback success show';fb.textContent='✅ 答对了！扇形越多，拼出的形状越接近长方形！';stage2Done=true;setTimeout(()=>{if(stage<2)goToStage(stage+1);},1500);}else{this.classList.add('wrong');fb.className='ch-feedback error show';fb.textContent='❌ 再想想哦～回忆刚才看到的拼接变化趋势。';setTimeout(()=>{this.classList.remove('wrong');fb.className='ch-feedback';},1500);}});});document.getElementById('btnShowDemo').addEventListener('click',()=>{goToStage(0);setTimeout(()=>{animT=1;draw();},100);});}
+  if(stage===2){setupPuzzle();document.getElementById('btnCheckPuzzle').addEventListener('click',checkPuzzle);document.getElementById('btnResetPuzzle').addEventListener('click',resetPuzzle);}
+}
+
+function goToStage(s){stage=s;animating=false;stopAutoDemo();if(s>=1)animT=1;if(s===0)animT=0;if(s>=2)stage2Done=true;updateStageBar();updateCtrlPanel();draw();}
+function updateStageBar(){for(let i=1;i<=3;i++){const e=document.getElementById('chS'+i);e.classList.remove('active','done');if(i===stage+1)e.classList.add('active');if(i<stage+1)e.classList.add('done');const l=e.nextElementSibling;if(l&&l.classList.contains('stage-label'))l.classList.toggle('active',i===stage+1);}for(let i=1;i<=2;i++)document.getElementById('chL'+i).classList.toggle('done',i<=stage);}
+
+function stopAutoDemo(){autoDemoRunning=false;if(autoDemoTimeout)clearTimeout(autoDemoTimeout);}
+
+function setupPuzzle(){
+  const pieces=['π','r','²','×','2','+','='],c=document.getElementById('puzzlePieces');if(!c)return;c.innerHTML='';
+  pieces.forEach(p=>{const e=document.createElement('div');e.className='puzzle-piece';e.textContent=p;e.dataset.value=p;e.addEventListener('mousedown',onPieceDown);e.addEventListener('touchstart',onPieceDown,{passive:false});c.appendChild(e);});
+  document.querySelectorAll('.puzzle-slot').forEach(s=>{s.textContent='';s.classList.remove('filled','correct-slot');});puzzlePieces=[];
+}
+
+function onPieceDown(e){if(stage4Done)return;e.preventDefault();const p=e.currentTarget;if(p.classList.contains('placed'))return;dragging=true;dragPiece=p;const cx=e.touches?e.touches[0].clientX:e.clientX,cy=e.touches?e.touches[0].clientY:e.clientY,r=p.getBoundingClientRect();dragOffX=cx-r.left;dragOffY=cy-r.top;p.style.position='fixed';p.style.left=(cx-dragOffX)+'px';p.style.top=(cy-dragOffY)+'px';p.style.zIndex='999';p.classList.add('dragging');document.addEventListener('mousemove',onPieceMove);document.addEventListener('mouseup',onPieceUp);document.addEventListener('touchmove',onPieceMove,{passive:false});document.addEventListener('touchend',onPieceUp);}
+function onPieceMove(e){if(!dragging||!dragPiece)return;e.preventDefault();const cx=e.touches?e.touches[0].clientX:e.clientX,cy=e.touches?e.touches[0].clientY:e.clientY;dragPiece.style.left=(cx-dragOffX)+'px';dragPiece.style.top=(cy-dragOffY)+'px';}
+function onPieceUp(e){if(!dragging||!dragPiece)return;dragging=false;document.removeEventListener('mousemove',onPieceMove);document.removeEventListener('mouseup',onPieceUp);document.removeEventListener('touchmove',onPieceMove);document.removeEventListener('touchend',onPieceUp);dragPiece.classList.remove('dragging');const cx=e.changedTouches?e.changedTouches[0].clientX:e.clientX,cy=e.changedTouches?e.changedTouches[0].clientY:e.clientY;dragPiece.style.display='none';const elB=document.elementFromPoint(cx,cy);dragPiece.style.display='';const sl=elB?elB.closest('.puzzle-slot'):null;let dropped=false;if(sl&&!sl.textContent&&sl.dataset.slot!==undefined){sl.textContent=dragPiece.dataset.value;sl.classList.add('filled');dragPiece.classList.add('placed');dropped=true;}if(!dropped){dragPiece.style.position='';dragPiece.style.left='';dragPiece.style.top='';dragPiece.style.zIndex='';}dragPiece=null;}
+
+function checkPuzzle(){const sls=document.querySelectorAll('.puzzle-slot');const vs=[];sls.forEach(s=>vs.push(s.textContent));const a=vs.join('');if(a==='πr²'||a==='πr2'){stage4Done=true;sls.forEach(s=>s.classList.add('correct-slot'));showChToast('🎉 太棒了！圆的面积公式：S = πr²','success');celebrate();draw();updateCtrlPanel();}else{const h=vs.every(v=>v==='')?'请先将卡片拖入框中':'提示：公式应为 π × r × r 即 πr²';showChToast('❌ 公式不对哦，'+h,'error');}}
+function resetPuzzle(){document.querySelectorAll('.puzzle-slot').forEach(s=>{s.textContent='';s.classList.remove('filled','correct-slot');});document.querySelectorAll('.puzzle-piece').forEach(p=>{p.classList.remove('placed');p.style.position='';p.style.left='';p.style.top='';p.style.zIndex='';});puzzlePieces=[];stage4Done=false;draw();}
+
+function showChToast(m,t){const el=document.getElementById('chToast');el.textContent=m;el.className='ch-toast '+t;el.style.display='block';setTimeout(()=>el.style.display='none',2500);}
+function celebrate(){const c=document.getElementById('chCelebration');c.innerHTML='';const cols=['#FF6B6B','#4ECDC4','#FFD93D','#27AE60','#FF8E53','#A29BFE'];for(let i=0;i<60;i++){const d=document.createElement('div');d.className='ch-confetti';d.style.left=Math.random()*100+'%';d.style.top=-(Math.random()*40+10)+'px';d.style.background=cols[Math.floor(Math.random()*cols.length)];d.style.animationDelay=Math.random()*1.5+'s';d.style.animationDuration=(Math.random()*1.5+1.5)+'s';c.appendChild(d);}setTimeout(()=>c.innerHTML='',3000);}
+
+function animLoop(){if(stage===0||stage===1||stage===2)draw();requestAnimationFrame(animLoop);}
+
+// Initialize when challenge tab is shown
+window.initChallengeCanvas = function(){
+  if(window._chInited)return;window._chInited=true;
+  goToStage(0);requestAnimationFrame(animLoop);
+};
+
+// Auto-init on load (in case user lands directly)
+setTimeout(()=>{ if(document.getElementById('challengeSection').classList.contains('active')) initChallengeCanvas(); },200);
+})();
+</script>
+</body>
+</html>
